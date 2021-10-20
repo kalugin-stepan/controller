@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+#socket client
 import socket
 
 conn = socket.socket()
