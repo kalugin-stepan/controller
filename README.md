@@ -1,6 +1,6 @@
 1 - git clone https://github.com/kalugin-stepan/controller.git
 
-2 - cd controller3
+2 - cd controller
 
 3 - sudo apt install nano
 
