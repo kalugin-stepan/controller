@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jsoystick</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <script src="/node_modules/jquery/dist/jquery.min.js"></script>
+    <script src="/static/js/joy.js"></script>
+    <script src="/node_modules/socket.io-client/dist/socket.io.min.js"></script>
+    <script src="/node_modules/peerjs/dist/peerjs.min.js"></script>
+    <script>
+        const socket = io.connect();
+    </script>
+    <script src="/static/js/JoyStick.js"></script>
+    <script src="/static/js/chat.js"></script>
+    <script src="/static/js/header.js"></script>
+</head>
+<body>
+    <%- include("./blocks/header.ejs") %>
+    <h2 name="con" class="h2 disconnected mb-30">Disconnected</h2>
+    <div class="container mb-30">
+        <div id="joy"></div>
+    </div>
+    <div style="display: none;" name="box"></div>
+    <%- include("./blocks/footer.ejs") %>
+    <script>
+        $('<li class="header__item"><a class="header__link" name="join">Join room</a></li>')
+        .insertAfter("body > header > div > div > nav > ul > li:nth-child(3)");
+        const joy = $("#joy");
+        function update_size() {
+            if (window.innerWidth > window.innerHeight) {
+            joy.height(window.innerHeight / 2);
+            }
+            else {
+                joy.height(window.innerWidth / 2)
+            }
+        }
+        update_size();
+        addEventListener("resize", (e) => {
+            update_size();
+            app.joy.Resize();
+        });
+        const app = new App("#joy", socket);
+        $("title").text("Joystick: " + app.uid);
+        setInterval(() => {
+            app.SendPos();
+        }, 50);
+        const chat = new Chat(new AudioFactory($("div[name=\"box\"]")), socket);
+        $("a[name=\"join\"]").click(() => {
+            const room_id = prompt("room id?");
+            if (room_id) {
+                chat.Join(room_id);
+            }
+        });
+    </script>
+</body>
+</html>
