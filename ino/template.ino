@@ -22,7 +22,7 @@ const char* password = "{password}";
 // IP-адрес сервера, к которому подключается nodeMCU
 const char* host = "{host}";
 // Порт сервера, ...
-const int port = {port};
+const unsigned int port = {port};
 //ID дрона
 const char* uid = "{uid}";
 
