@@ -58,13 +58,36 @@ function is_loged_in(req) {
         return false;
     });
 }
+function login(req, res) {
+    var _a, _b;
+    return __awaiter(this, void 0, void 0, function* () {
+        if (typeof req.body.login === "string" && typeof req.body.password === "string" || typeof req.query.login === "string" && typeof req.query.password === "string") {
+            const login = req.body.login ? req.body.login.toLowerCase() : (_a = req.query.login) === null || _a === void 0 ? void 0 : _a.toString().toLowerCase();
+            const password = req.body.password ? req.body.password : (_b = req.query.password) === null || _b === void 0 ? void 0 : _b.toString();
+            const password_md5 = (0, md5_1.default)(password).toString();
+            if (password.length >= 8) {
+                const user = yield database.getUserByLogin(login);
+                if (user !== null) {
+                    if (user.password === password_md5 && user.active === 1) {
+                        res.cookie("id", user.id);
+                        res.cookie("login", user.login);
+                        res.cookie("password", user.password);
+                        res.cookie("email", user.email);
+                        res.cookie("uid", user.uid);
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    });
+}
 app.get("/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     if (yield is_loged_in(req)) {
         res.render("index.ejs", { host: config.host, port: config.port, peer_port: config.peer_port });
+        return;
     }
-    else {
-        res.redirect("/login");
-    }
+    res.redirect("/login");
 }));
 app.get("/script", (req, res) => {
     let template = fs_1.default.readFileSync(path_1.default.join(root, "ino", "template.ino")).toString("utf-8");
@@ -82,10 +105,9 @@ app.get("/script", (req, res) => {
 app.get("/profile", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     if (yield is_loged_in(req)) {
         res.render("profile.ejs");
+        return;
     }
-    else {
-        res.redirect("/login");
-    }
+    res.redirect("/login");
 }));
 app.get("/users", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     if (yield is_loged_in(req)) {
@@ -98,10 +120,9 @@ app.get("/users", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             }
         }
         res.render("users.ejs", { users: info });
+        return;
     }
-    else {
-        res.redirect("/login");
-    }
+    res.redirect("/login");
 }));
 app.get("/get_users", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     if (yield is_loged_in(req)) {
@@ -114,45 +135,30 @@ app.get("/get_users", (req, res) => __awaiter(void 0, void 0, void 0, function* 
             }
         }
         res.send(JSON.stringify(info));
+        return;
     }
-    else {
-        res.redirect("/login");
-    }
+    res.redirect("/login");
 }));
 app.get("/videos", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     if (yield is_loged_in(req)) {
         res.render("videos.ejs", { host: config.host, port: config.port, peer_port: config.peer_port });
+        return;
     }
-    else {
-        res.redirect("/login");
-    }
+    res.redirect("/login");
 }));
-app.get("/login", (req, res) => {
-    res.render("login.ejs");
-});
-app.post("/login", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const login = req.body.login.toLowerCase();
-    const password = req.body.password;
-    const password_md5 = (0, md5_1.default)(password).toString();
-    if (password.length >= 8) {
-        const user = yield database.getUserByLogin(login);
-        if (user !== null) {
-            if (user.password === password_md5 && user.active === 1) {
-                res.cookie("id", user.id);
-                res.cookie("login", user.login);
-                res.cookie("password", user.password);
-                res.cookie("email", user.email);
-                res.cookie("uid", user.uid);
-                res.redirect("/");
-            }
-            else {
-                res.redirect("/login");
-            }
-        }
-        else {
-            res.redirect("/login");
-        }
+app.get("/login", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    if (yield login(req, res)) {
+        res.redirect("/");
+        return;
     }
+    res.render("login.ejs");
+}));
+app.post("/login", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    if (yield login(req, res)) {
+        res.redirect("/");
+        return;
+    }
+    res.redirect("/login");
 }));
 app.get("/logout", (req, res) => {
     res.clearCookie("id");
@@ -217,10 +223,9 @@ app.get("/change_password/:code", (req, res) => __awaiter(void 0, void 0, void 0
     const code_ex = yield database.code_exists(req.params.code);
     if (code_ex) {
         res.render("change_password.ejs");
+        return;
     }
-    else if (!code_ex) {
-        res.redirect("/login");
-    }
+    res.redirect("/login");
 }));
 app.post("/change_password/:code", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const password_md5 = (0, md5_1.default)(req.body.password).toString();
@@ -229,10 +234,9 @@ app.post("/change_password/:code", (req, res) => __awaiter(void 0, void 0, void 
     if (code_ex) {
         database.changePasswordByCode(password_md5, code, uuid4());
         res.send('<a href="/login">Пароль сменён</a>');
+        return;
     }
-    else if (!code_ex) {
-        res.redirect("/login");
-    }
+    res.redirect("/login");
 }));
 app.get("/active/:code", (req, res) => {
     database.active(req.params.code, uuid4());
@@ -252,10 +256,9 @@ const socket_server = net_1.default.createServer(socket => {
             if (client.web_socket !== null) {
                 client.web_socket.emit("info", 1);
             }
+            return;
         }
-        else {
-            socket.write("0\n");
-        }
+        socket.write("0\n");
     });
     const on_close = (client) => {
         if (client !== undefined) {

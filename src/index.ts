@@ -1,4 +1,4 @@
-import express, {Request} from "express";
+import express, {Request, Response} from "express";
 import net from "net";
 const app = express();
 import fs from "fs";
@@ -51,7 +51,7 @@ database.getUsers().then((users : Array<User>) => {
 
 });
 
-async function is_loged_in(req : Request) : Promise<boolean> {
+async function is_loged_in(req: Request): Promise<boolean> {
     const id : number = parseInt(req.cookies.id);
     const login : string = req.cookies.login;
     const email : string = req.cookies.email;
@@ -66,16 +66,37 @@ async function is_loged_in(req : Request) : Promise<boolean> {
     return false;
 }
 
-app.get("/", async (req, res): Promise<void> => {
+async function login(req: Request, res: Response): Promise<boolean> {
+    if (typeof req.body.login === "string" && typeof req.body.password === "string" || typeof req.query.login === "string" && typeof req.query.password === "string") {
+        const login : string = req.body.login ? req.body.login.toLowerCase(): req.query.login?.toString().toLowerCase();
+        const password : string = req.body.password ? req.body.password: req.query.password?.toString();
+        const password_md5 : string = md5(password).toString();
+        if (password.length >= 8) {
+            const user : User | null = await database.getUserByLogin(login);
+            if (user !== null) {
+                if (user.password === password_md5 && user.active === 1) {
+                    res.cookie("id", user.id);
+                    res.cookie("login", user.login);
+                    res.cookie("password", user.password);
+                    res.cookie("email", user.email);
+                    res.cookie("uid", user.uid);
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+
+app.get("/", async (req, res) => {
     if (await is_loged_in(req)) {
         res.render("index.ejs", {host : config.host, port : config.port, peer_port : config.peer_port});
+        return;
     }
-    else {
-        res.redirect("/login");
-    }
+    res.redirect("/login");
 });
 
-app.get("/script", (req, res): void => {
+app.get("/script", (req, res) => {
     let template = fs.readFileSync(path.join(root, "ino", "template.ino")).toString("utf-8");
     template = template.replace("{wifi}", req.query.wifi as string);
     template = template.replace("{password}", req.query.password as string);
@@ -89,16 +110,15 @@ app.get("/script", (req, res): void => {
     res.sendFile(path.join(root, "script.zip"));
 });
 
-app.get("/profile", async (req, res): Promise<void> => {
+app.get("/profile", async (req, res) => {
     if (await is_loged_in(req)) {
         res.render("profile.ejs");
+        return;
     }
-    else {
-        res.redirect("/login");
-    }
+    res.redirect("/login");
 });
 
-app.get("/users", async (req, res): Promise<void> => {
+app.get("/users", async (req, res) => {
     if (await is_loged_in(req)) {
         const keys : IterableIterator<string> = clients.keys();
         const info = [];
@@ -109,13 +129,12 @@ app.get("/users", async (req, res): Promise<void> => {
             }
         }
         res.render("users.ejs", {users : info});
+        return;
     }
-    else {
-        res.redirect("/login");
-    }
+    res.redirect("/login");
 });
 
-app.get("/get_users", async (req, res): Promise<void> => {
+app.get("/get_users", async (req, res) => {
     if (await is_loged_in(req)) {
         const keys : IterableIterator<string> = clients.keys();
         const info = [];
@@ -126,51 +145,36 @@ app.get("/get_users", async (req, res): Promise<void> => {
             }
         }
         res.send(JSON.stringify(info));
+        return;
     }
-    else {
-        res.redirect("/login");
-    }
+    res.redirect("/login");
 });
 
-app.get("/videos", async (req, res): Promise<void> => {
+app.get("/videos", async (req, res) => {
     if (await is_loged_in(req)) {
         res.render("videos.ejs", {host : config.host, port : config.port, peer_port : config.peer_port});
+        return;
     }
-    else {
-        res.redirect("/login");
-    }
+    res.redirect("/login");
 });
 
-app.get("/login", (req, res): void => {
+app.get("/login", async (req, res) => {
+    if (await login(req, res)) {
+        res.redirect("/");
+        return;    
+    }
     res.render("login.ejs");
 });
 
-app.post("/login", async (req, res): Promise<void> => {
-    const login : string = req.body.login.toLowerCase();
-    const password : string = req.body.password;
-    const password_md5 : string = md5(password).toString();
-    if (password.length >= 8) {
-        const user : User | null = await database.getUserByLogin(login);
-        if (user !== null) {
-            if (user.password === password_md5 && user.active === 1) {
-                res.cookie("id", user.id);
-                res.cookie("login", user.login);
-                res.cookie("password", user.password);
-                res.cookie("email", user.email);
-                res.cookie("uid", user.uid);
-                res.redirect("/");
-            }
-            else {
-                res.redirect("/login");
-            }
-        }
-        else {
-            res.redirect("/login")
-        }
+app.post("/login", async (req, res) => {
+    if (await login(req, res)) {
+        res.redirect("/");
+        return;
     }
+    res.redirect("/login")
 });
 
-app.get("/logout", (req, res): void => {
+app.get("/logout", (req, res) => {
     res.clearCookie("id");
     res.clearCookie("login");
     res.clearCookie("password");
@@ -180,12 +184,12 @@ app.get("/logout", (req, res): void => {
     res.render("logout.ejs");
 });
 
-app.get("/register", (req, res): void => {
+app.get("/register", (req, res) => {
     res.setHeader("Content-Type", "text/html; charset=utf-8");
     res.render("register.ejs");
 });
 
-app.post("/register", async (req, res): Promise<void> => {
+app.post("/register", async (req, res) => {
     const login : string = req.body.login.toLowerCase();
     const email : string = req.body.email.toLowerCase();
     const password : string = req.body.password;
@@ -208,11 +212,11 @@ app.post("/register", async (req, res): Promise<void> => {
     }
 });
 
-app.get("/forgot_password", (req, res): void => {
+app.get("/forgot_password", (req, res) => {
     res.render("forgot_password.ejs");
 });
 
-app.post("/forgot_password", async (req, res): Promise<void> => {
+app.post("/forgot_password", async (req, res) => {
     const login : string = req.body.login.toLowerCase();
     const email : string = req.body.email.toLowerCase();
     if (login && email) {
@@ -234,30 +238,28 @@ app.post("/forgot_password", async (req, res): Promise<void> => {
     }
 });
 
-app.get("/change_password/:code", async (req, res): Promise<void> => {
+app.get("/change_password/:code", async (req, res) => {
     const code_ex : boolean = await database.code_exists(req.params.code);
         if (code_ex) {
             res.render("change_password.ejs");
+            return;
         }
-        else if (!code_ex) {
-            res.redirect("/login");
-        }
+        res.redirect("/login");
 });
 
-app.post("/change_password/:code", async (req, res): Promise<void> => {
+app.post("/change_password/:code", async (req, res) => {
     const password_md5 : string = md5(req.body.password).toString();
     const code : string = req.params.code;
     const code_ex : boolean = await database.code_exists(code);
     if (code_ex) {
         database.changePasswordByCode(password_md5, code, uuid4());
         res.send('<a href="/login">Пароль сменён</a>');
+        return;
     }
-    else if (!code_ex) {
-        res.redirect("/login");
-    }
+    res.redirect("/login");
 });
 
-app.get("/active/:code", (req, res): void => {
+app.get("/active/:code", (req, res) => {
     database.active(req.params.code, uuid4());
     res.redirect("/login");
 });
@@ -276,10 +278,9 @@ const socket_server = net.createServer(socket => {
             if (client.web_socket !== null) {
                 client.web_socket.emit("info", 1);
             }
+            return;
         }
-        else {
-            socket.write("0\n");
-        }
+        socket.write("0\n");
     });
     const on_close = (client: Client | undefined) => {
         if (client !== undefined) {
