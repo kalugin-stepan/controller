@@ -25,10 +25,10 @@ const cookie_parser_1 = __importDefault(require("cookie-parser"));
 const sender_1 = require("./sender");
 const database_1 = require("./database");
 const os_1 = __importDefault(require("os"));
-const { v4: uuid4 } = require("uuid");
+const { v4: uuid } = require("uuid");
 const root = path_1.default.dirname(__dirname);
 const config = JSON.parse(fs_1.default.readFileSync(path_1.default.join(root, "config.json"), "utf-8"));
-config.host = os_1.default.hostname;
+config.host = os_1.default.hostname();
 const mysql_config = JSON.parse(fs_1.default.readFileSync(path_1.default.join(root, "mysql_config.json"), "utf-8"));
 const clients = new Map();
 const rooms = new Map();
@@ -180,8 +180,8 @@ app.post("/register", (req, res) => __awaiter(void 0, void 0, void 0, function* 
     const email = req.body.email.toLowerCase();
     const password = req.body.password;
     const password_md5 = (0, md5_1.default)(req.body.password).toString();
-    const code = uuid4();
-    const uid = uuid4();
+    const code = uuid();
+    const uid = uuid();
     if (password.length >= 8) {
         if (!(yield database.email_exists(email)) && !(yield database.login_exists(login))) {
             sender.send(email, "Active", "http://" + config.host + ":" + config.port + "/active/" + code);
@@ -207,7 +207,7 @@ app.post("/forgot_password", (req, res) => __awaiter(void 0, void 0, void 0, fun
         const user = yield database.getUserByLogin(login);
         if (user !== null) {
             if (user.email === email) {
-                const code = uuid4();
+                const code = uuid();
                 database.changeCodeById(user.id, code);
                 sender.send(email, "Смена пароля", "http://" + config.host + ":" + config.port + "/change_password/" + code);
                 res.send('На вашу почту отправлена ссылка со сменой пароля');
@@ -234,14 +234,14 @@ app.post("/change_password/:code", (req, res) => __awaiter(void 0, void 0, void 
     const code = req.params.code;
     const code_ex = yield database.code_exists(code);
     if (code_ex) {
-        database.changePasswordByCode(password_md5, code, uuid4());
+        database.changePasswordByCode(password_md5, code, uuid());
         res.send('<a href="/login">Пароль сменён</a>');
         return;
     }
     res.redirect("/login");
 }));
 app.get("/active/:code", (req, res) => {
-    database.active(req.params.code, uuid4());
+    database.active(req.params.code, uuid());
     res.redirect("/login");
 });
 const socket_server = net_1.default.createServer(socket => {

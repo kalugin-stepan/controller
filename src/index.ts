@@ -12,7 +12,7 @@ import cookieParser from "cookie-parser";
 import {Sender} from "./sender"
 import {DataBase, User, bool} from "./database"
 import os from "os";
-const {v4 : uuid4} = require("uuid");
+const {v4 : uuid} = require("uuid");
 
 interface Client {
     con : bool;
@@ -25,7 +25,7 @@ interface Client {
 const root : string = path.dirname(__dirname);
 
 const config = JSON.parse(fs.readFileSync(path.join(root, "config.json"), "utf-8"));
-config.host = os.hostname;
+config.host = os.hostname();
 const mysql_config = JSON.parse(fs.readFileSync(path.join(root, "mysql_config.json"), "utf-8"));
 
 const clients = new Map<string, Client>();
@@ -195,8 +195,8 @@ app.post("/register", async (req, res) => {
     const email : string = req.body.email.toLowerCase();
     const password : string = req.body.password;
     const password_md5 : string = md5(req.body.password).toString();
-    const code : string = uuid4();
-    const uid : string = uuid4();
+    const code : string = uuid();
+    const uid : string = uuid();
     if (password.length >= 8) {
         if (!await database.email_exists(email) && !await database.login_exists(login)) {
             sender.send(email, "Active", "http://" + config.host + ":" + config.port + "/active/" + code);
@@ -224,7 +224,7 @@ app.post("/forgot_password", async (req, res) => {
         const user : User | null = await database.getUserByLogin(login);
         if (user !== null) {
             if (user.email === email) {
-                const code = uuid4();
+                const code = uuid();
                 database.changeCodeById(user.id, code);
                 sender.send(email, "Смена пароля", "http://" + config.host + ":" + config.port + "/change_password/" + code);
                 res.send('На вашу почту отправлена ссылка со сменой пароля');
@@ -253,7 +253,7 @@ app.post("/change_password/:code", async (req, res) => {
     const code : string = req.params.code;
     const code_ex : boolean = await database.code_exists(code);
     if (code_ex) {
-        database.changePasswordByCode(password_md5, code, uuid4());
+        database.changePasswordByCode(password_md5, code, uuid());
         res.send('<a href="/login">Пароль сменён</a>');
         return;
     }
@@ -261,7 +261,7 @@ app.post("/change_password/:code", async (req, res) => {
 });
 
 app.get("/active/:code", (req, res) => {
-    database.active(req.params.code, uuid4());
+    database.active(req.params.code, uuid());
     res.redirect("/login");
 });
 
