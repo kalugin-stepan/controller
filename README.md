@@ -1,9 +1,8 @@
-1 - git clone https://github.com/kalugin-stepan/controller.git
-
-2 - cd controller
-
-3 - sudo apt install nano
-
-4 - nano mysql_config.json
-
-5 - ./controller.sh install
+<ul>
+  <h1>Установка на Ubuntu 16.04</h1>
+  <li>git clone https://github.com/kalugin-stepan/controller.git</li>
+  <li>cd controller</li>
+  <li>sudo apt install nano</li>
+  <li>nano mysql_config.json</li>
+  <li>controller.sh install</li>
+ </ul>
