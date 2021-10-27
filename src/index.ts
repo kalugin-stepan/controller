@@ -11,7 +11,6 @@ import md5 from "md5";
 import cookieParser from "cookie-parser";
 import {Sender} from "./sender"
 import {DataBase, User, bool} from "./database"
-import os from "os";
 const {v4 : uuid} = require("uuid");
 
 interface Client {
@@ -25,7 +24,6 @@ interface Client {
 const root : string = path.dirname(__dirname);
 
 const config = JSON.parse(fs.readFileSync(path.join(root, "config.json"), "utf-8"));
-config.host = os.hostname();
 const mysql_config = JSON.parse(fs.readFileSync(path.join(root, "mysql_config.json"), "utf-8"));
 
 const clients = new Map<string, Client>();

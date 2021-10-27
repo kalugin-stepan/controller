@@ -1,1 +1,1 @@
-{"port": 80, "peer_port" : 443, "socket_port" : 1000, "email" : "example@gmail.com", "password" : "password"}
+{"host": "localhost", "port": 80, "peer_port" : 443, "socket_port" : 1000, "email" : "example@gmail.com", "password" : "password"}
