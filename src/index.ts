@@ -298,7 +298,7 @@ const socket_server = net.createServer(socket => {
     });
 });
 
-socket_server.listen(config.socket_port);
+socket_server.listen(config.socket_port, config.host);
 
 io.on("connection", (socket: Socket) => {
     let client: Client;

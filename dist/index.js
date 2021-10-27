@@ -276,7 +276,7 @@ const socket_server = net_1.default.createServer(socket => {
         on_close(client);
     });
 });
-socket_server.listen(config.socket_port);
+socket_server.listen(config.socket_port, config.host);
 io.on("connection", (socket) => {
     let client;
     socket.on("info", (data) => {
