@@ -80,11 +80,11 @@ void loop() {
                 int x = data["X"];
                 int y = data["Y"];
                 if (y >= 0) {
-                    analogWrite(ENA, y*10+x*5);
+                    analogWrite(ENA, y*10-x*5);
                     digitalWrite(IN1, HIGH);
                     digitalWrite(IN2, LOW);
                     
-                    analogWrite(ENB, y*10-x*5);
+                    analogWrite(ENB, y*10+x*5);
                     digitalWrite(IN3, HIGH);
                     digitalWrite(IN4, LOW);
                 }
@@ -93,7 +93,7 @@ void loop() {
                     digitalWrite(IN1, LOW);
                     digitalWrite(IN2, HIGH);
                     
-                    analogWrite(ENB, y*-10-x*5);
+                    analogWrite(ENB, y*+10-x*5);
                     digitalWrite(IN3, LOW);
                     digitalWrite(IN4, HIGH);
                 }
