@@ -264,7 +264,6 @@ app.get("/active/:code", (req, res) => {
 });
 
 const socket_server = net.createServer(socket => {
-    socket.setTimeout(100);
     let client: Client;
     socket.on("data", data => {
         const id = data.toString();

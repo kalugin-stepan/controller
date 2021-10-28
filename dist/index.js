@@ -243,7 +243,6 @@ app.get("/active/:code", (req, res) => {
     res.redirect("/login");
 });
 const socket_server = net_1.default.createServer(socket => {
-    socket.setTimeout(100);
     let client;
     socket.on("data", data => {
         const id = data.toString();
