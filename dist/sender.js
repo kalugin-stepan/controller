@@ -23,4 +23,3 @@ class Sender {
     }
 }
 exports.Sender = Sender;
-;

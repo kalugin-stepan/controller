@@ -170,7 +170,7 @@ app.get("/logout", (req, res) => {
     res.render("logout.ejs");
 });
 app.get("/register", (req, res) => {
-    res.setHeader("Content-Type", "text/html; charset=utf-8");
+    res.setHeader("Content-Type", "text/html charset=utf-8");
     res.render("register.ejs");
 });
 app.post("/register", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
