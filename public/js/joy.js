@@ -8,6 +8,7 @@ class Joy {
         this.container = $("<div></div>");
         this.container.css("border", "1px black solid");
         this.container.css("margin", "auto");
+        this.container.css("touch-action", "none");
         this.container_size = this.parent.height();
         this.container.width(this.container_size);
         this.container.height(this.container_size);
