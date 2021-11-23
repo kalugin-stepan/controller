@@ -57,12 +57,15 @@ void setup()
 void loop() {
     // Основной код, тут запускается клиент, который подключается к серверу, пока сервер соединен, то в serial будут выводиться сообщения, отправленные с сервера  
     WiFiClient client;
-
     Serial.printf("\n[Connecting to %s ...", host);
     if (client.connect(host, port)) {
+        DynamicJsonDocument json(1024);
         Serial.println("connected");
-
-        client.write(uid);
+        json["type"] = "connection";
+        json["value"] = uid;
+        String data;
+        serializeJson(json, data)
+        client.write(data.c_str());
         String line = client.readStringUntil('\n');
         Serial.println(line);
         if (line == "1") {
@@ -71,11 +74,15 @@ void loop() {
             if (client.available()) {
                 String line = client.readStringUntil('\n');
                 Serial.println(line);
-
+                if (line == "ping") {
+                  json["type"] = "ping";
+                  serializeJson(json, data);
+                  client.write(data.c_str());
+                  continue
+                }
                 int line_len = line.length() + 1; 
                 char line_array[line_len];
                 line.toCharArray(line_array, line_len);
-                DynamicJsonDocument data(1024);
                 deserializeJson(data, line_array);
                 int x = data["X"];
                 int y = data["Y"];
