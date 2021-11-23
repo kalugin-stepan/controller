@@ -38,7 +38,7 @@ app.use(express_1.default.static(root));
 app.use((0, cookie_parser_1.default)());
 database.getUsers().then((users) => {
     users.forEach((user) => {
-        clients.set(user.uid, { con: 0, login: user.login, uid: user.uid, socket: null, web_socket: null });
+        clients.set(user.uid, { con: 0, login: user.login, uid: user.uid, socket: null, web_socket: null, pinged: true });
     });
     server.listen(config.port);
 });
@@ -184,7 +184,7 @@ app.post("/register", (req, res) => __awaiter(void 0, void 0, void 0, function* 
         if (!(yield database.email_exists(email)) && !(yield database.login_exists(login))) {
             sender.send(email, "Active", "http://" + config.host + ":" + config.port + "/active/" + code);
             database.add_usr(login, password_md5, email, uid, code);
-            clients.set(uid, { con: 0, login: login, uid: uid, socket: null, web_socket: null });
+            clients.set(uid, { con: 0, login: login, uid: uid, socket: null, web_socket: null, pinged: true });
             res.send("На вашу почту пришло сообщение с активацией аккаунта.");
         }
         else {
@@ -245,21 +245,49 @@ app.get("/active/:code", (req, res) => {
 const socket_server = net_1.default.createServer(socket => {
     let client;
     socket.on("data", data => {
-        const id = data.toString();
-        const c = clients.get(id);
-        if (c !== undefined && c.socket === null) {
-            client = c;
-            client.con = 1;
-            client.socket = socket;
-            socket.write("1\n");
-            if (client.web_socket !== null) {
-                client.web_socket.emit("info", 1);
+        try {
+            const jdata = JSON.parse(data.toString());
+            if (jdata.type === undefined) {
+                return;
             }
-            return;
+            if (jdata.type === "connection" && jdata.value !== undefined) {
+                const c = clients.get(jdata.value);
+                if (c !== undefined && c.socket === null) {
+                    client = c;
+                    client.con = 1;
+                    client.socket = socket;
+                    socket.write("1\n");
+                    if (client.web_socket !== null) {
+                        client.web_socket.emit("info", 1);
+                    }
+                    const i = setInterval(() => {
+                        if (client.pinged) {
+                            socket.write("ping\n");
+                            client.pinged = false;
+                            console.log("send ping");
+                            return;
+                        }
+                        if (!client.pinged) {
+                            clearInterval(i);
+                            on_close(client);
+                            console.log("close ping");
+                            return;
+                        }
+                    }, 5000);
+                    return;
+                }
+                socket.write("0\n");
+                return;
+            }
+            if (jdata.type === "ping" && client !== undefined) {
+                client.pinged = true;
+                console.log("ping");
+            }
         }
-        socket.write("0\n");
+        catch (_a) { }
     });
     const on_close = (client) => {
+        socket.destroy();
         if (client !== undefined) {
             client.con = 0;
             client.socket = null;
