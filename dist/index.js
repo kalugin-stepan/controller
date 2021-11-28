@@ -30,7 +30,7 @@ const config = JSON.parse(fs_1.default.readFileSync(path_1.default.join(root, "c
 const clients = new Map();
 const rooms = new Map();
 const sender = new sender_1.Sender(config.email, config.password);
-const database = new database_1.DataBase("test.db");
+const database = new database_1.DataBase("db");
 app.use(express_1.default.urlencoded({ extended: true }));
 app.use(express_1.default.json());
 app.use(express_1.default.static(root));
@@ -169,7 +169,7 @@ app.get("/logout", (req, res) => {
     res.render("logout.ejs");
 });
 app.get("/register", (req, res) => {
-    res.setHeader("Content-Type", "text/html charset=utf-8");
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
     res.render("register.ejs");
 });
 app.post("/register", (req, res) => __awaiter(void 0, void 0, void 0, function* () {

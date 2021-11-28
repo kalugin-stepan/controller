@@ -17,16 +17,7 @@ const sqlite3_1 = __importDefault(require("sqlite3"));
 class DataBase {
     constructor(db_path) {
         this.db = new sqlite3_1.default.Database(db_path);
-    }
-    static configure(db_path) {
-        const db = new sqlite3_1.default.Database(db_path);
-        db.exec("create table if not exists users (id integer primary key autoincrement unique, login varchar(30), email varchar(30), password varchar(32), uid varchar(36), active tinyint(1), code varchar(36))", (err) => {
-            if (err) {
-                console.log(err.message);
-                return;
-            }
-            db.close();
-        });
+        this.exec("create table if not exists users (id integer primary key autoincrement unique, login varchar(30), email varchar(30), password varchar(32), uid varchar(36), active tinyint(1), code varchar(36))");
     }
     exec(cmd) {
         return __awaiter(this, void 0, void 0, function* () {

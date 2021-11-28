@@ -32,7 +32,7 @@ const rooms = new Map<string, string[]>()
 
 const sender = new Sender(config.email, config.password)
 
-const database = new DataBase("test.db")
+const database = new DataBase("db")
 
 app.use(express.urlencoded({extended: true}))
 app.use(express.json())
@@ -184,7 +184,7 @@ app.get("/logout", (req, res) => {
 })
 
 app.get("/register", (req, res) => {
-    res.setHeader("Content-Type", "text/html charset=utf-8")
+    res.setHeader("Content-Type", "text/html; charset=utf-8")
     res.render("register.ejs")
 })
 

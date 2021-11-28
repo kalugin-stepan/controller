@@ -19,17 +19,7 @@ class DataBase {
 
     constructor(db_path: string) {
         this.db = new sqlite.Database(db_path)
-    }
-
-    static configure(db_path: string) {
-        const db = new sqlite.Database(db_path)
-        db.exec("create table if not exists users (id integer primary key autoincrement unique, login varchar(30), email varchar(30), password varchar(32), uid varchar(36), active tinyint(1), code varchar(36))", (err) => {
-            if (err) {
-                console.log(err.message)
-                return
-            }
-            db.close()
-        })
+        this.exec("create table if not exists users (id integer primary key autoincrement unique, login varchar(30), email varchar(30), password varchar(32), uid varchar(36), active tinyint(1), code varchar(36))")
     }
 
     private async exec(cmd: string): Promise<void> {
