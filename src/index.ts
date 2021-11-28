@@ -25,7 +25,6 @@ interface Client {
 const root : string = path.dirname(__dirname)
 
 const config = JSON.parse(fs.readFileSync(path.join(root, "config.json"), "utf-8"))
-const mysql_config = JSON.parse(fs.readFileSync(path.join(root, "mysql_config.json"), "utf-8"))
 
 const clients = new Map<string, Client>()
 
@@ -33,7 +32,7 @@ const rooms = new Map<string, string[]>()
 
 const sender = new Sender(config.email, config.password)
 
-const database = new DataBase(mysql_config)
+const database = new DataBase("test.db")
 
 app.use(express.urlencoded({extended: true}))
 app.use(express.json())

@@ -27,11 +27,10 @@ const database_1 = require("./database");
 const { v4: uuid } = require("uuid");
 const root = path_1.default.dirname(__dirname);
 const config = JSON.parse(fs_1.default.readFileSync(path_1.default.join(root, "config.json"), "utf-8"));
-const mysql_config = JSON.parse(fs_1.default.readFileSync(path_1.default.join(root, "mysql_config.json"), "utf-8"));
 const clients = new Map();
 const rooms = new Map();
 const sender = new sender_1.Sender(config.email, config.password);
-const database = new database_1.DataBase(mysql_config);
+const database = new database_1.DataBase("test.db");
 app.use(express_1.default.urlencoded({ extended: true }));
 app.use(express_1.default.json());
 app.use(express_1.default.static(root));
@@ -264,13 +263,11 @@ const socket_server = net_1.default.createServer(socket => {
                         if (client.pinged) {
                             socket.write("ping\n");
                             client.pinged = false;
-                            console.log("send ping");
                             return;
                         }
                         if (!client.pinged) {
                             clearInterval(i);
                             on_close(client);
-                            console.log("close ping");
                             return;
                         }
                     }, 5000);
@@ -281,7 +278,6 @@ const socket_server = net_1.default.createServer(socket => {
             }
             if (jdata.type === "ping" && client !== undefined) {
                 client.pinged = true;
-                console.log("ping");
             }
         }
         catch (_a) { }
