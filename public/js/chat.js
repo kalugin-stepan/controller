@@ -30,7 +30,10 @@ class AudioEl {
         this.parent.append(this.audio);
     }
     Start(stream) {
-        this.audio.get(0).srcObject = stream;
+        const aud = this.audio.get(0);
+        if (aud !== undefined) {
+            aud.srcObject = stream;
+        }
     }
 }
 class VideoEl {
@@ -40,7 +43,10 @@ class VideoEl {
         this.parent.append(this.video);
     }
     Start(stream) {
-        this.video.get(0).srcObject = stream;
+        const vid = this.video.get(0);
+        if (vid !== undefined) {
+            vid.srcObject = stream;
+        }
     }
 }
 class AudioFactory {

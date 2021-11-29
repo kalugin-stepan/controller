@@ -25,7 +25,10 @@ class AudioEl implements Media {
         this.parent.append(this.audio);
     }
     Start(stream: MediaStream): void {
-        this.audio.get(0).srcObject = stream;
+        const aud = this.audio.get(0)
+        if (aud !== undefined) {
+            aud.srcObject = stream;
+        }
     }
 }
 
@@ -38,7 +41,10 @@ class VideoEl implements Media {
         this.parent.append(this.video);
     }
     Start(stream: MediaStream): void {
-        this.video.get(0).srcObject = stream;
+        const vid = this.video.get(0)
+        if (vid !== undefined) {
+            vid.srcObject = stream;
+        }
     }
 }
 

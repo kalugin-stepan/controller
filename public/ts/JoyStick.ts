@@ -23,6 +23,7 @@ class App {
     private socket: Socket;
     readonly joy: Joy;
     readonly uid: string;
+    private lastpos: string = "";
     constructor(joy_selector: string, socket: Socket = io.connect()) {
         this.socket = socket;
         this.uid = GetCookie("uid");
@@ -50,6 +51,10 @@ class App {
         });
     }
     SendPos(): void {
-        this.socket.emit("pos", JSON.stringify(this.joy.GetPos()));
+        const pos = JSON.stringify(this.joy.GetPos());
+        if (pos !== this.lastpos) {
+            this.socket.emit("pos", pos);
+            this.lastpos = pos;
+        }
     }
 }

@@ -18,6 +18,7 @@ function GetCookie(cname) {
 }
 class App {
     constructor(joy_selector, socket = io.connect()) {
+        this.lastpos = "";
         this.socket = socket;
         this.uid = GetCookie("uid");
         this.joy = new Joy(joy_selector);
@@ -44,6 +45,10 @@ class App {
         });
     }
     SendPos() {
-        this.socket.emit("pos", JSON.stringify(this.joy.GetPos()));
+        const pos = JSON.stringify(this.joy.GetPos());
+        if (pos !== this.lastpos) {
+            this.socket.emit("pos", pos);
+            this.lastpos = pos;
+        }
     }
 }
