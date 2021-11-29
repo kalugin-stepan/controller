@@ -1,5 +1,4 @@
 import express, {Request, Response} from "express"
-import mqtt, { connect } from "mqtt"
 const app = express()
 import fs from "fs"
 import path from "path"
@@ -9,10 +8,12 @@ import {Socket} from "socket.io"
 const io = require('socket.io')(server)
 import md5 from "md5"
 import cookieParser from "cookie-parser"
+const {v4 : uuid} = require("uuid")
 import {Sender} from "./sender"
 import {DataBase, User, bool} from "./database"
-const {v4 : uuid} = require("uuid")
+import { MQTT } from "./mqtt"
 
+export {Client}
 interface Client {
     con : bool
     login : string
@@ -29,11 +30,11 @@ const clients = new Map<string, Client>()
 
 const rooms = new Map<string, string[]>()
 
-const sender = new Sender(config.email, config.password)
-
 const database = new DataBase("db")
 
-const mqtt_socket = mqtt.connect("mqtt://localhost:1883")
+const sender = new Sender(config.email, config.password)
+
+const mqtt = new MQTT(config.mqtt_url, clients)
 
 app.use(express.urlencoded({extended: true}))
 app.use(express.json())
@@ -262,53 +263,7 @@ app.get("/active/:code", (req, res) => {
     res.redirect("/login")
 })
 
-mqtt_socket.subscribe("connection", (err) => {
-    if (err) {
-        console.log(err.message)
-    }
-})
 
-mqtt_socket.subscribe("ping", (err) => {
-    if (err) {
-        console.log(err.message)
-    }
-})
-
-mqtt_socket.on("message", (topic, data) => {
-    if (topic === "connection") {
-        const uid = data.toString()
-        const client = clients.get(uid)
-        if (client !== undefined) {
-            client.con = 1
-            client.web_socket?.emit("info", client.con)
-            mqtt_socket.publish(uid+":c", "1")
-            const ping =  setInterval(() => {
-                if (client._pinged) {
-                    mqtt_socket.publish(uid+":ping", "")
-                    client._pinged = false
-                    return
-                }
-                if (!client._pinged) {
-                    client.con = 0
-                    client.web_socket?.emit("info", client.con)
-                    client._pinged = true
-                    clearInterval(ping)
-                }
-            }, 5000)
-            return
-        }
-        mqtt_socket.publish(uid, "0")
-        return
-    }
-    if (topic === "ping") {
-        const uid = data.toString()
-        const client = clients.get(uid)
-        if (client !== undefined) {
-            client._pinged = true;
-            return
-        }
-    }
-})
 
 io.on("connection", (socket: Socket) => {
     let client: Client
@@ -322,7 +277,7 @@ io.on("connection", (socket: Socket) => {
     })
     socket.on("pos", (data: string) => {
         if (client !== undefined && client.con === 1) {
-            mqtt_socket.publish(client.uid+":p", data)
+            mqtt.emit(client.uid+":p", data)
         }
     })
     socket.on("disconnect", () => {

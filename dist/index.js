@@ -13,7 +13,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
-const mqtt_1 = __importDefault(require("mqtt"));
 const app = (0, express_1.default)();
 const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
@@ -22,16 +21,17 @@ const server = require("http").createServer(app);
 const io = require('socket.io')(server);
 const md5_1 = __importDefault(require("md5"));
 const cookie_parser_1 = __importDefault(require("cookie-parser"));
+const { v4: uuid } = require("uuid");
 const sender_1 = require("./sender");
 const database_1 = require("./database");
-const { v4: uuid } = require("uuid");
+const mqtt_1 = require("./mqtt");
 const root = path_1.default.dirname(__dirname);
 const config = JSON.parse(fs_1.default.readFileSync(path_1.default.join(root, "config.json"), "utf-8"));
 const clients = new Map();
 const rooms = new Map();
-const sender = new sender_1.Sender(config.email, config.password);
 const database = new database_1.DataBase("db");
-const mqtt_socket = mqtt_1.default.connect("mqtt://localhost:1883");
+const sender = new sender_1.Sender(config.email, config.password);
+const mqtt = new mqtt_1.MQTT(config.mqtt_url, clients);
 app.use(express_1.default.urlencoded({ extended: true }));
 app.use(express_1.default.json());
 app.use(express_1.default.static(root));
@@ -241,53 +241,6 @@ app.get("/active/:code", (req, res) => {
     database.active(req.params.code, uuid());
     res.redirect("/login");
 });
-mqtt_socket.subscribe("connection", (err) => {
-    if (err) {
-        console.log(err.message);
-    }
-});
-mqtt_socket.subscribe("ping", (err) => {
-    if (err) {
-        console.log(err.message);
-    }
-});
-mqtt_socket.on("message", (topic, data) => {
-    var _a;
-    if (topic === "connection") {
-        const uid = data.toString();
-        const client = clients.get(uid);
-        if (client !== undefined) {
-            client.con = 1;
-            (_a = client.web_socket) === null || _a === void 0 ? void 0 : _a.emit("info", client.con);
-            mqtt_socket.publish(uid + ":c", "1");
-            const ping = setInterval(() => {
-                var _a;
-                if (client._pinged) {
-                    mqtt_socket.publish(uid + ":ping", "");
-                    client._pinged = false;
-                    return;
-                }
-                if (!client._pinged) {
-                    client.con = 0;
-                    (_a = client.web_socket) === null || _a === void 0 ? void 0 : _a.emit("info", client.con);
-                    client._pinged = true;
-                    clearInterval(ping);
-                }
-            }, 5000);
-            return;
-        }
-        mqtt_socket.publish(uid, "0");
-        return;
-    }
-    if (topic === "ping") {
-        const uid = data.toString();
-        const client = clients.get(uid);
-        if (client !== undefined) {
-            client._pinged = true;
-            return;
-        }
-    }
-});
 io.on("connection", (socket) => {
     let client;
     socket.on("info", (data) => {
@@ -300,7 +253,7 @@ io.on("connection", (socket) => {
     });
     socket.on("pos", (data) => {
         if (client !== undefined && client.con === 1) {
-            mqtt_socket.publish(client.uid + ":p", data);
+            mqtt.emit(client.uid + ":p", data);
         }
     });
     socket.on("disconnect", () => {

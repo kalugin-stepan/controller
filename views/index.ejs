@@ -46,7 +46,7 @@
         $("title").text("Joystick: " + app.uid);
         setInterval(() => {
             app.SendPos();
-        }, 50);
+        }, 1);
         const chat = new Chat(new AudioFactory($("div[name=\"box\"]")), socket);
         $("a[name=\"join\"]").click(() => {
             const room_id = prompt("room id?");
