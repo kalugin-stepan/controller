@@ -83,7 +83,7 @@ function login(req, res) {
 }
 app.get("/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     if (yield is_loged_in(req)) {
-        res.render("index.ejs", { host: config.host, port: config.port, peer_port: config.peer_port });
+        res.render("index.ejs");
         return;
     }
     res.redirect("/login");
@@ -140,7 +140,7 @@ app.get("/get_users", (req, res) => __awaiter(void 0, void 0, void 0, function* 
 }));
 app.get("/videos", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     if (yield is_loged_in(req)) {
-        res.render("videos.ejs", { host: config.host, port: config.port, peer_port: config.peer_port });
+        res.render("videos.ejs");
         return;
     }
     res.redirect("/login");

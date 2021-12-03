@@ -89,7 +89,7 @@ async function login(req: Request, res: Response): Promise<boolean> {
 
 app.get("/", async (req, res) => {
     if (await is_loged_in(req)) {
-        res.render("index.ejs", {host : config.host, port : config.port, peer_port : config.peer_port})
+        res.render("index.ejs")
         return
     }
     res.redirect("/login")
@@ -151,7 +151,7 @@ app.get("/get_users", async (req, res) => {
 
 app.get("/videos", async (req, res) => {
     if (await is_loged_in(req)) {
-        res.render("videos.ejs", {host : config.host, port : config.port, peer_port : config.peer_port})
+        res.render("videos.ejs")
         return
     }
     res.redirect("/login")
