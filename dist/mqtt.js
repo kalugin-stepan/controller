@@ -39,7 +39,7 @@ class MQTT {
         if (client !== undefined) {
             client.con = 1;
             (_a = client.web_socket) === null || _a === void 0 ? void 0 : _a.emit("info", client.con);
-            this.socket.publish(uid + ":c", "1");
+            this.socket.publish(uid + ":conn", "1");
             const ping = setInterval(() => {
                 var _a;
                 if (client._pinged) {
@@ -56,7 +56,7 @@ class MQTT {
             }, 5000);
             return;
         }
-        this.socket.publish(uid, "0");
+        this.socket.publish(uid + ":conn", "0");
     }
     OnPing(data) {
         const uid = data.toString();

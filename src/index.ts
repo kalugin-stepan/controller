@@ -277,7 +277,7 @@ io.on("connection", (socket: Socket) => {
     })
     socket.on("pos", (data: string) => {
         if (client !== undefined && client.con === 1) {
-            mqtt.emit(client.uid+":p", data)
+            mqtt.emit(client.uid+":pos", data)
         }
     })
     socket.on("disconnect", () => {

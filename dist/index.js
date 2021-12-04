@@ -253,7 +253,7 @@ io.on("connection", (socket) => {
     });
     socket.on("pos", (data) => {
         if (client !== undefined && client.con === 1) {
-            mqtt.emit(client.uid + ":p", data);
+            mqtt.emit(client.uid + ":pos", data);
         }
     });
     socket.on("disconnect", () => {
