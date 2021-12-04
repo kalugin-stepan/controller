@@ -27,11 +27,11 @@ conn.subscribe(uid+":ping")
 conn.subscribe(uid+":c")
 
 conn.on("message", (topic, data) => {
-    if (topic === uid + ":p") {
+    if (topic === uid+":p") {
         console.log(data.toString())
         return
     }
-    if (topic === uid + ":ping") {
+    if (topic === uid+":ping") {
         conn.publish("ping", uid)
         return
     }
