@@ -29,7 +29,7 @@ const root = path_1.default.dirname(__dirname);
 const config = JSON.parse(fs_1.default.readFileSync(path_1.default.join(root, "config.json"), "utf-8"));
 const clients = new Map();
 const rooms = new Map();
-const database = new database_1.DataBase("db");
+const database = new database_1.DataBase("db.sqlite");
 const sender = new sender_1.Sender(config.email, config.password);
 const mqtt = new mqtt_1.MQTT(config.mqtt_url, clients);
 app.use(express_1.default.urlencoded({ extended: true }));

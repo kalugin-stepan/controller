@@ -30,7 +30,7 @@ const clients = new Map<string, Client>()
 
 const rooms = new Map<string, string[]>()
 
-const database = new DataBase("db")
+const database = new DataBase("db.sqlite")
 
 const sender = new Sender(config.email, config.password)
 
