@@ -44,7 +44,6 @@ app.use(express.static(root))
 app.use(cookieParser())
 
 database.getUsers().then((users : Array<User>) => {
-
     users.forEach((user : User) => {
         clients.set(user.uid, {con : 0, login : user.login, uid: user.uid, web_socket: null, _pinged: true})
     })
@@ -239,11 +238,11 @@ app.post("/forgot_password", async (req, res) => {
 
 app.get("/change_password/:code", async (req, res) => {
     const code_ex : boolean = await database.code_exists(req.params.code)
-        if (code_ex) {
-            res.render("change_password.ejs")
-            return
-        }
-        res.redirect("/login")
+    if (code_ex) {
+        res.render("change_password.ejs")
+        return
+    }
+    res.redirect("/login")
 })
 
 app.post("/change_password/:code", async (req, res) => {
