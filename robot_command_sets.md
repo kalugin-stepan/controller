@@ -22,7 +22,42 @@ const conn = mqtt.connect("mqtt://localhost:1883")
 // ID пользователя
 const uid = "3430deab-320c-4d5b-ace1-9d8efe0b4363"
 
-// Отправка запроса на соеденение
+const mqtt = require("mqtt")
+
+// Подключение к MQTT серверу
+const conn = mqtt.connect("mqtt://localhost:1883")
+
+// ID пользователя
+const uid = "3430deab-320c-4d5b-ace1-9d8efe0b4363"
+
+// Отправка запроса на соеденение с сервером
+conn.publish("connection", uid)
+
+// Подписка на ответы и информацию от сервера
+conn.subscribe(uid+":pos")
+conn.subscribe(uid+":ping")
+conn.subscribe(uid+":conn")
+
+conn.on("message", (topic, data) => {
+    if (topic === uid+":pos") {
+        // Приём, конвертация и обработка данных с сервера
+        console.log(JSON.parse(data))
+        return
+    }
+    if (topic === uid+":ping") {
+        // Проверка соеденения с сервером методом ping-а
+        conn.publish("ping", uid)
+        return
+    }
+    if (topic === uid+":conn") {
+        // Обработка ответа на запроса на подключения к серверу
+        const answer = data.toString()
+        if (answer === "0") {
+            conn.end(true)
+            return
+        }
+    }
+})
 conn.publish("connection", uid)
 
 // Подписка на ответы и информацию от сервера
