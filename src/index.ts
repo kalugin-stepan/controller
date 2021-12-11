@@ -35,7 +35,7 @@ const database = new DataBase("db.sqlite")
 
 const sender = new Sender(config.email, config.password)
 
-const mqtt = new MQTT(`mqtt://${config.mqtt_host}:${config.mqtt_port}`, clients)
+const mqtt = new MQTT(`${config.mqtt_host}:${config.mqtt_port}`, clients)
 
 app.use(express.urlencoded({extended: true}))
 app.use(express.json())

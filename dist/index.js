@@ -1,13 +1,4 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -17,7 +8,8 @@ const app = (0, express_1.default)();
 const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
 const adm_zip_1 = __importDefault(require("adm-zip"));
-const server = require("http").createServer(app);
+const http_1 = require("http");
+const server = (0, http_1.createServer)(app);
 const io = require('socket.io')(server);
 const md5_1 = __importDefault(require("md5"));
 const cookie_parser_1 = __importDefault(require("cookie-parser"));
@@ -31,7 +23,7 @@ const clients = new Map();
 const rooms = new Map();
 const database = new database_1.DataBase("db.sqlite");
 const sender = new sender_1.Sender(config.email, config.password);
-const mqtt = new mqtt_1.MQTT(config.mqtt_url, clients);
+const mqtt = new mqtt_1.MQTT(`${config.mqtt_host}:${config.mqtt_port}`, clients);
 app.use(express_1.default.urlencoded({ extended: true }));
 app.use(express_1.default.json());
 app.use(express_1.default.static(root));
@@ -41,90 +33,89 @@ database.getUsers().then((users) => {
         clients.set(user.uid, { con: 0, login: user.login, uid: user.uid, web_socket: null, _pinged: true });
     });
 });
-function is_loged_in(req) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const id = parseInt(req.cookies.id);
-        const login = req.cookies.login;
-        const email = req.cookies.email;
-        const password = req.cookies.password;
-        const uid = req.cookies.uid;
-        if (id && login && email && password && uid) {
-            const user = yield database.getUserByID(id);
-            if (user !== null) {
-                return login === user.login && email === user.email && user.password === password && user.uid === uid && user.active === 1;
-            }
+async function is_loged_in(req) {
+    const id = parseInt(req.cookies.id);
+    const login = req.cookies.login;
+    const email = req.cookies.email;
+    const password = req.cookies.password;
+    const uid = req.cookies.uid;
+    if (id && login && email && password && uid) {
+        const user = await database.getUserByID(id);
+        if (user !== null) {
+            return login === user.login && email === user.email && user.password === password && user.uid === uid && user.active === 1;
         }
-        return false;
-    });
+    }
+    return false;
 }
-function login(req, res) {
-    var _a, _b;
-    return __awaiter(this, void 0, void 0, function* () {
-        if (typeof req.body.login === "string" && typeof req.body.password === "string" || typeof req.query.login === "string" && typeof req.query.password === "string") {
-            const login = req.body.login ? req.body.login.toLowerCase() : (_a = req.query.login) === null || _a === void 0 ? void 0 : _a.toString().toLowerCase();
-            const password = req.body.password ? req.body.password : (_b = req.query.password) === null || _b === void 0 ? void 0 : _b.toString();
-            const password_md5 = (0, md5_1.default)(password).toString();
-            if (password.length >= 8) {
-                const user = yield database.getUserByLogin(login);
-                if (user !== null) {
-                    if (user.password === password_md5 && user.active === 1) {
-                        res.cookie("id", user.id);
-                        res.cookie("login", user.login);
-                        res.cookie("password", user.password);
-                        res.cookie("email", user.email);
-                        res.cookie("uid", user.uid);
-                        return true;
-                    }
+async function login(req, res) {
+    if (typeof req.body.login === "string" && typeof req.body.password === "string" || typeof req.query.login === "string" && typeof req.query.password === "string") {
+        const login = req.body.login ? req.body.login.toLowerCase() : req.query.login?.toString().toLowerCase();
+        const password = req.body.password ? req.body.password : req.query.password?.toString();
+        const password_md5 = (0, md5_1.default)(password).toString();
+        if (password.length >= 8) {
+            const user = await database.getUserByLogin(login);
+            if (user !== null) {
+                if (user.password === password_md5 && user.active === 1) {
+                    res.cookie("id", user.id);
+                    res.cookie("login", user.login);
+                    res.cookie("password", user.password);
+                    res.cookie("email", user.email);
+                    res.cookie("uid", user.uid);
+                    return true;
                 }
             }
         }
-        return false;
-    });
+    }
+    return false;
 }
-app.get("/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    if (yield is_loged_in(req)) {
+app.get("/", async (req, res) => {
+    if (await is_loged_in(req)) {
         res.render("index.ejs");
         return;
     }
     res.redirect("/login");
-}));
+});
 app.get("/script", (req, res) => {
-    let template = fs_1.default.readFileSync(path_1.default.join(root, "ino", "template.ino")).toString("utf-8");
+    if (typeof req.query.wifi !== "string" || typeof req.query.password !== "string" || typeof req.cookies.uid !== "string") {
+        res.redirect("/");
+        return;
+    }
+    let template = fs_1.default.readFileSync(path_1.default.join(root, "ino", "template.ino"), "utf-8");
     template = template.replace("{wifi}", req.query.wifi);
     template = template.replace("{password}", req.query.password);
-    template = template.replace("{uid}", req.cookies.uid);
-    template = template.replace("{host}", config.host);
-    template = template.replace("{port}", config.socket_port);
+    template = template.replaceAll("{uid}", req.cookies.uid);
+    template = template.replace("{host}", config.mqtt_host);
+    template = template.replace("{port}", config.mqtt_port);
     fs_1.default.writeFileSync(path_1.default.join(root, "ino", "script", "script", "script.ino"), template);
     const zip = new adm_zip_1.default();
     zip.addLocalFolder(path_1.default.join(root, "ino", "script"));
     zip.writeZip(path_1.default.join(root, "script.zip"));
     res.sendFile(path_1.default.join(root, "script.zip"));
 });
-app.get("/profile", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    if (yield is_loged_in(req)) {
+app.get("/profile", async (req, res) => {
+    if (await is_loged_in(req)) {
         res.render("profile.ejs");
         return;
     }
     res.redirect("/login");
-}));
-app.get("/users", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    if (yield is_loged_in(req)) {
-        const keys = clients.keys();
+});
+app.get("/users", async (req, res) => {
+    if (await is_loged_in(req)) {
+        const vals = clients.values();
         const info = [];
-        for (const key of keys) {
-            const user = clients.get(key);
-            if (user.con === 1) {
-                info.push(user.login);
+        for (const val of vals) {
+            if (val.con === 1) {
+                info.push(val.login);
             }
         }
+        console.log(info);
         res.render("users.ejs", { users: info });
         return;
     }
     res.redirect("/login");
-}));
-app.get("/get_users", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    if (yield is_loged_in(req)) {
+});
+app.get("/get_users", async (req, res) => {
+    if (await is_loged_in(req)) {
         const keys = clients.keys();
         const info = [];
         for (const key of keys) {
@@ -133,32 +124,32 @@ app.get("/get_users", (req, res) => __awaiter(void 0, void 0, void 0, function* 
                 info.push(user.login);
             }
         }
-        res.send(JSON.stringify(info));
+        res.send(JSON.stringify({ "info": info }));
         return;
     }
     res.redirect("/login");
-}));
-app.get("/videos", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    if (yield is_loged_in(req)) {
+});
+app.get("/videos", async (req, res) => {
+    if (await is_loged_in(req)) {
         res.render("videos.ejs");
         return;
     }
     res.redirect("/login");
-}));
-app.get("/login", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    if (yield login(req, res)) {
+});
+app.get("/login", async (req, res) => {
+    if (await login(req, res)) {
         res.redirect("/");
         return;
     }
     res.render("login.ejs");
-}));
-app.post("/login", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    if (yield login(req, res)) {
+});
+app.post("/login", async (req, res) => {
+    if (await login(req, res)) {
         res.redirect("/");
         return;
     }
     res.redirect("/login");
-}));
+});
 app.get("/logout", (req, res) => {
     res.clearCookie("id");
     res.clearCookie("login");
@@ -172,7 +163,7 @@ app.get("/register", (req, res) => {
     res.setHeader("Content-Type", "text/html; charset=utf-8");
     res.render("register.ejs");
 });
-app.post("/register", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+app.post("/register", async (req, res) => {
     const login = req.body.login.toLowerCase();
     const email = req.body.email.toLowerCase();
     const password = req.body.password;
@@ -180,7 +171,7 @@ app.post("/register", (req, res) => __awaiter(void 0, void 0, void 0, function* 
     const code = uuid();
     const uid = uuid();
     if (password.length >= 8) {
-        if (!(yield database.email_exists(email)) && !(yield database.login_exists(login))) {
+        if (!await database.email_exists(email) && !await database.login_exists(login)) {
             sender.send(email, "Active", "http://" + config.host + ":" + config.port + "/active/" + code);
             database.add_usr(login, password_md5, email, uid, code);
             clients.set(uid, { con: 0, login: login, uid: uid, web_socket: null, _pinged: true });
@@ -193,15 +184,15 @@ app.post("/register", (req, res) => __awaiter(void 0, void 0, void 0, function* 
     else {
         res.redirect("/login");
     }
-}));
+});
 app.get("/forgot_password", (req, res) => {
     res.render("forgot_password.ejs");
 });
-app.post("/forgot_password", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+app.post("/forgot_password", async (req, res) => {
     const login = req.body.login.toLowerCase();
     const email = req.body.email.toLowerCase();
     if (login && email) {
-        const user = yield database.getUserByLogin(login);
+        const user = await database.getUserByLogin(login);
         if (user !== null) {
             if (user.email === email) {
                 const code = uuid();
@@ -217,26 +208,26 @@ app.post("/forgot_password", (req, res) => __awaiter(void 0, void 0, void 0, fun
     else {
         res.redirect("/forgot_password");
     }
-}));
-app.get("/change_password/:code", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const code_ex = yield database.code_exists(req.params.code);
+});
+app.get("/change_password/:code", async (req, res) => {
+    const code_ex = await database.code_exists(req.params.code);
     if (code_ex) {
         res.render("change_password.ejs");
         return;
     }
     res.redirect("/login");
-}));
-app.post("/change_password/:code", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+});
+app.post("/change_password/:code", async (req, res) => {
     const password_md5 = (0, md5_1.default)(req.body.password).toString();
     const code = req.params.code;
-    const code_ex = yield database.code_exists(code);
+    const code_ex = await database.code_exists(code);
     if (code_ex) {
         database.changePasswordByCode(password_md5, code, uuid());
         res.send('<a href="/login">Пароль сменён</a>');
         return;
     }
     res.redirect("/login");
-}));
+});
 app.get("/active/:code", (req, res) => {
     database.active(req.params.code, uuid());
     res.redirect("/login");
