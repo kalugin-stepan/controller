@@ -1,4 +1,4 @@
-async function parseData() : Promise<string[]> {
+async function parseData() : Promise<string> {
     return new Promise((res, rej) => {
         $.ajax({
             url : "/get_users",
@@ -10,11 +10,12 @@ async function parseData() : Promise<string[]> {
 }
 
 setInterval(() => {
-    parseData().then((users : string[]) => {
+    parseData().then((data: string) => {
+        const users: string[] = JSON.parse(data)["users"]
         const list = $("ul");
         list.html("");
         users.forEach((user : string) => {
             list.append(`<li>${user}</li>`);
         });
     })
-}, 2000);
+}, 10000);

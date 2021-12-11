@@ -3,7 +3,8 @@ const app = express()
 import fs from "fs"
 import path from "path"
 import AdmZip from "adm-zip"
-const server = require("http").createServer(app)
+import { createServer } from "http"
+const server = createServer(app)
 import {Socket} from "socket.io"
 const io = require('socket.io')(server)
 import md5 from "md5"
@@ -34,7 +35,7 @@ const database = new DataBase("db.sqlite")
 
 const sender = new Sender(config.email, config.password)
 
-const mqtt = new MQTT(config.mqtt_url, clients)
+const mqtt = new MQTT(`mqtt://${config.mqtt_host}:${config.mqtt_port}`, clients)
 
 app.use(express.urlencoded({extended: true}))
 app.use(express.json())
@@ -95,12 +96,16 @@ app.get("/", async (req, res) => {
 })
 
 app.get("/script", (req, res) => {
-    let template = fs.readFileSync(path.join(root, "ino", "template.ino")).toString("utf-8")
+    if (typeof req.query.wifi !== "string" || typeof req.query.password !== "string" || typeof req.cookies.uid !== "string") {
+        res.redirect("/")
+        return
+    }
+    let template = fs.readFileSync(path.join(root, "ino", "template.ino"), "utf-8")
     template = template.replace("{wifi}", req.query.wifi as string)
     template = template.replace("{password}", req.query.password as string)
-    template = template.replace("{uid}", req.cookies.uid)
-    template = template.replace("{host}", config.host)
-    template = template.replace("{port}", config.socket_port)
+    template = template.replaceAll("{uid}", req.cookies.uid)
+    template = template.replace("{host}", config.mqtt_host)
+    template = template.replace("{port}", config.mqtt_port)
     fs.writeFileSync(path.join(root, "ino", "script", "script", "script.ino"), template)
     const zip = new AdmZip()
     zip.addLocalFolder(path.join(root, "ino", "script"))
@@ -118,14 +123,14 @@ app.get("/profile", async (req, res) => {
 
 app.get("/users", async (req, res) => {
     if (await is_loged_in(req)) {
-        const keys : IterableIterator<string> = clients.keys()
+        const vals : IterableIterator<Client> = clients.values()
         const info = []
-        for (const key of keys) {
-            const user : Client = clients.get(key) as Client
-            if (user.con === 1) {
-                info.push(user.login)
+        for (const val of vals) {
+            if (val.con === 1) {
+                info.push(val.login)
             }
         }
+        console.log(info)
         res.render("users.ejs", {users : info})
         return
     }
@@ -142,7 +147,7 @@ app.get("/get_users", async (req, res) => {
                 info.push(user.login)
             }
         }
-        res.send(JSON.stringify(info))
+        res.send(JSON.stringify({"info": info}))
         return
     }
     res.redirect("/login")
