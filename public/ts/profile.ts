@@ -69,7 +69,7 @@ function config(): void {
 function download(): void {
     const wifi : string = $('input[name="wifi"]').val() as string;
     const password : string = $('input[name="password"]').val() as string;
-    window.location.href = `/script?wifi=${wifi}&password=${password}`;
+    window.location.href = `/script.zip?wifi=${wifi}&password=${password}`;
 }
 
 $(document).ready(() => {

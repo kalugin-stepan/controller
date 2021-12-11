@@ -35,7 +35,20 @@ const database = new DataBase("db.sqlite")
 
 const sender = new Sender(config.email, config.password)
 
-const mqtt = new MQTT(`${config.mqtt_host}:${config.mqtt_port}`, clients)
+const mqtt = new MQTT(`mqtt://${config.mqtt_host}:${config.mqtt_port}`, clients)
+
+const templ = fs.readFileSync(path.join(root, "template.ino"), "utf-8")
+
+function get_zip(uid: string, ssid: string, password: string): Buffer {
+    const zip = new AdmZip();
+    const data = Buffer.from(templ.replace("{wifi}", ssid)
+    .replace("password", password)
+    .replaceAll("{uid}", uid)
+    .replace("{host}", config.mqtt_host)
+    .replace("{port}", config.mqtt_port))
+    zip.addFile("script/script.ino", data)
+    return zip.toBuffer();
+}
 
 app.use(express.urlencoded({extended: true}))
 app.use(express.json())
@@ -95,22 +108,12 @@ app.get("/", async (req, res) => {
     res.redirect("/login")
 })
 
-app.get("/script", (req, res) => {
+app.get("/script.zip", (req, res) => {
     if (typeof req.query.wifi !== "string" || typeof req.query.password !== "string" || typeof req.cookies.uid !== "string") {
         res.redirect("/")
         return
     }
-    let template = fs.readFileSync(path.join(root, "ino", "template.ino"), "utf-8")
-    template = template.replace("{wifi}", req.query.wifi as string)
-    template = template.replace("{password}", req.query.password as string)
-    template = template.replaceAll("{uid}", req.cookies.uid)
-    template = template.replace("{host}", config.mqtt_host)
-    template = template.replace("{port}", config.mqtt_port)
-    fs.writeFileSync(path.join(root, "ino", "script", "script", "script.ino"), template)
-    const zip = new AdmZip()
-    zip.addLocalFolder(path.join(root, "ino", "script"))
-    zip.writeZip(path.join(root, "script.zip"))
-    res.sendFile(path.join(root, "script.zip"))
+    res.send(get_zip(req.cookies.uid, req.query.wifi, req.query.password))
 })
 
 app.get("/profile", async (req, res) => {

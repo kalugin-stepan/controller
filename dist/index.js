@@ -23,7 +23,18 @@ const clients = new Map();
 const rooms = new Map();
 const database = new database_1.DataBase("db.sqlite");
 const sender = new sender_1.Sender(config.email, config.password);
-const mqtt = new mqtt_1.MQTT(`${config.mqtt_host}:${config.mqtt_port}`, clients);
+const mqtt = new mqtt_1.MQTT(`mqtt://${config.mqtt_host}:${config.mqtt_port}`, clients);
+const templ = fs_1.default.readFileSync(path_1.default.join(root, "template.ino"), "utf-8");
+function get_zip(uid, ssid, password) {
+    const zip = new adm_zip_1.default();
+    const data = Buffer.from(templ.replace("{wifi}", ssid)
+        .replace("password", password)
+        .replaceAll("{uid}", uid)
+        .replace("{host}", config.mqtt_host)
+        .replace("{port}", config.mqtt_port));
+    zip.addFile("script/script.ino", data);
+    return zip.toBuffer();
+}
 app.use(express_1.default.urlencoded({ extended: true }));
 app.use(express_1.default.json());
 app.use(express_1.default.static(root));
@@ -75,22 +86,12 @@ app.get("/", async (req, res) => {
     }
     res.redirect("/login");
 });
-app.get("/script", (req, res) => {
+app.get("/script.zip", (req, res) => {
     if (typeof req.query.wifi !== "string" || typeof req.query.password !== "string" || typeof req.cookies.uid !== "string") {
         res.redirect("/");
         return;
     }
-    let template = fs_1.default.readFileSync(path_1.default.join(root, "ino", "template.ino"), "utf-8");
-    template = template.replace("{wifi}", req.query.wifi);
-    template = template.replace("{password}", req.query.password);
-    template = template.replaceAll("{uid}", req.cookies.uid);
-    template = template.replace("{host}", config.mqtt_host);
-    template = template.replace("{port}", config.mqtt_port);
-    fs_1.default.writeFileSync(path_1.default.join(root, "ino", "script", "script", "script.ino"), template);
-    const zip = new adm_zip_1.default();
-    zip.addLocalFolder(path_1.default.join(root, "ino", "script"));
-    zip.writeZip(path_1.default.join(root, "script.zip"));
-    res.sendFile(path_1.default.join(root, "script.zip"));
+    res.send(get_zip(req.cookies.uid, req.query.wifi, req.query.password));
 });
 app.get("/profile", async (req, res) => {
     if (await is_loged_in(req)) {
