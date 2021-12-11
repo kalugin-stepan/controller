@@ -33,15 +33,13 @@ class MQTT {
         });
     }
     OnConnection(data) {
-        var _a;
         const uid = data.toString();
         const client = this.clients.get(uid);
         if (client !== undefined) {
             client.con = 1;
-            (_a = client.web_socket) === null || _a === void 0 ? void 0 : _a.emit("info", client.con);
+            client.web_socket?.emit("info", client.con);
             this.socket.publish(uid + ":conn", "1");
             const ping = setInterval(() => {
-                var _a;
                 if (client._pinged) {
                     this.socket.publish(uid + ":ping", "");
                     client._pinged = false;
@@ -49,7 +47,7 @@ class MQTT {
                 }
                 if (!client._pinged) {
                     client.con = 0;
-                    (_a = client.web_socket) === null || _a === void 0 ? void 0 : _a.emit("info", client.con);
+                    client.web_socket?.emit("info", client.con);
                     client._pinged = true;
                     clearInterval(ping);
                 }
