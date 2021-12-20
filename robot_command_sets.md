@@ -7,6 +7,7 @@
 * **topic:** `'${uid}:ping'`, **value:** `''` - проверка соеденения с клиентом методом ping-а
 
 ### Подробнее про координаты
+
 Координата 'Y' отвечает за скорость и направление движения (если 'Y' > 0 - вперёд, если 'Y' < 0 - назад)\
 Координата 'X' отвечает за угол поворота (если 'X' > 0 - направо, если 'X' < 0 - налево)
 
@@ -18,26 +19,26 @@
 ## Пример клиентского приложения
 
 ```js
+// Подключение библиотек MQTT и MD5
 const mqtt = require("mqtt")
+const md5 = require("md5")
+const { exit } = require("process")
 
 // Подключение к MQTT серверу
-const conn = mqtt.connect("mqtt://localhost:1883")
+const conn = mqtt.connect("mqtt://broker.emqx.io:1883")
 
 // ID пользователя
 const uid = "3430deab-320c-4d5b-ace1-9d8efe0b4363"
 
-const mqtt = require("mqtt")
+// ID пользователя закодированный в через md5
+const md5_uid = md5(uid)
 
-// Подключение к MQTT серверу
-const conn = mqtt.connect("mqtt://localhost:1883")
+// Отправка запроса на соеденение с сервером,
+// с вложенным ID пользователя закодированным в через md5
+conn.publish("connection", md5_uid)
 
-// ID пользователя
-const uid = "3430deab-320c-4d5b-ace1-9d8efe0b4363"
-
-// Отправка запроса на соеденение с сервером
-conn.publish("connection", uid)
-
-// Подписка на ответы и информацию от сервера
+// Подписка на ответы и информацию от сервера,
+// в фориате "ID:команда"
 conn.subscribe(uid+":pos")
 conn.subscribe(uid+":ping")
 conn.subscribe(uid+":conn")
@@ -50,15 +51,17 @@ conn.on("message", (topic, data) => {
     }
     if (topic === uid+":ping") {
         // Проверка соеденения с сервером методом ping-а
-        conn.publish("ping", uid)
+        conn.publish("ping", md5_uid)
         return
     }
     if (topic === uid+":conn") {
         // Обработка ответа на запроса на подключения к серверу
+        // Если ответ равен "0" то подключение отвергнуто,
+        // и тогда клиентское приложение закрывает соеденение
         const answer = data.toString()
         if (answer === "0") {
             conn.end(true)
-            return
+            exit()
         }
     }
 })
