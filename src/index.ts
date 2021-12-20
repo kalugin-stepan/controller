@@ -14,11 +14,12 @@ import {Sender} from "./sender"
 import {DataBase, User, bool} from "./database"
 import { MQTT } from "./mqtt"
 
-export {Client}
+export {Client, get_client_by_field_value}
 interface Client {
     con : bool
     login : string
     uid: string
+    uid_md5: string
     web_socket: Socket | null
     _pinged: boolean
 }
@@ -27,7 +28,7 @@ const root : string = path.dirname(__dirname)
 
 const config = JSON.parse(fs.readFileSync(path.join(root, "config.json"), "utf-8"))
 
-const clients = new Map<string, Client>()
+const clients: Client[] = []
 
 const rooms = new Map<string, string[]>()
 
@@ -38,6 +39,15 @@ const sender = new Sender(config.email, config.password)
 const mqtt = new MQTT(`mqtt://${config.mqtt_host}:${config.mqtt_port}`, clients)
 
 const templ = fs.readFileSync(path.join(root, "template.ino"), "utf-8")
+
+function get_client_by_field_value(field_name: keyof Client, field_value: any): Client | undefined {
+    for (const client of clients) {
+        if (client[field_name] === field_value) {
+            return client
+        }
+    }
+    return undefined
+}
 
 function get_zip(uid: string, ssid: string, password: string): Buffer {
     const zip = new AdmZip();
@@ -59,7 +69,7 @@ app.use(cookieParser())
 
 database.getUsers().then((users : Array<User>) => {
     users.forEach((user : User) => {
-        clients.set(user.uid, {con : 0, login : user.login, uid: user.uid, web_socket: null, _pinged: true})
+        clients.push({con : 0, login : user.login, uid: user.uid, uid_md5: md5(user.uid).toString(), web_socket: null, _pinged: true})
     })
 })
 
@@ -142,12 +152,10 @@ app.get("/users", async (req, res) => {
 
 app.get("/get_users", async (req, res) => {
     if (await is_loged_in(req)) {
-        const keys : IterableIterator<string> = clients.keys()
         const info = []
-        for (const key of keys) {
-            const user : Client = clients.get(key) as Client
-            if (user.con === 1) {
-                info.push(user.login)
+        for (const client of clients) {
+            if (client.con === 1) {
+                info.push(client.login)
             }
         }
         res.send(JSON.stringify({"info": info}))
@@ -206,7 +214,7 @@ app.post("/register", async (req, res) => {
         if (!await database.email_exists(email) && !await database.login_exists(login)) {
             sender.send(email, "Active", "http://" + config.host + ":" + config.port + "/active/" + code)
             database.add_usr(login, password_md5, email, uid, code)
-            clients.set(uid, {con : 0, login : login, uid: uid, web_socket: null, _pinged: true})
+            clients.push({con : 0, login : login, uid: uid, uid_md5: md5(uid).toString(), web_socket: null, _pinged: true})
             res.send("На вашу почту пришло сообщение с активацией аккаунта.")
         }
         else {
@@ -275,7 +283,7 @@ app.get("/active/:code", (req, res) => {
 io.on("connection", (socket: Socket) => {
     let client: Client
     socket.on("info", (data: string) => {
-        const c = clients.get(data)
+        const c = get_client_by_field_value("uid", data)
         if (c !== undefined) {
             client = c
             client.web_socket = socket

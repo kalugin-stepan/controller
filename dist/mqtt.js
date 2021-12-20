@@ -4,6 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MQTT = void 0;
+const index_1 = require("./index");
 const mqtt_1 = __importDefault(require("mqtt"));
 class MQTT {
     constructor(url, clients) {
@@ -33,9 +34,10 @@ class MQTT {
         });
     }
     OnConnection(data) {
-        const uid = data.toString();
-        const client = this.clients.get(uid);
+        const md5_uid = data.toString();
+        const client = (0, index_1.get_client_by_field_value)("uid_md5", md5_uid);
         if (client !== undefined) {
+            const uid = client.uid;
             client.con = 1;
             client.web_socket?.emit("info", client.con);
             this.socket.publish(uid + ":conn", "1");
@@ -54,11 +56,11 @@ class MQTT {
             }, 5000);
             return;
         }
-        this.socket.publish(uid + ":conn", "0");
+        this.socket.publish(md5_uid + ":conn", "0");
     }
     OnPing(data) {
         const uid = data.toString();
-        const client = this.clients.get(uid);
+        const client = (0, index_1.get_client_by_field_value)("uid_md5", uid);
         if (client !== undefined) {
             client._pinged = true;
         }

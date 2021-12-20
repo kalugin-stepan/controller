@@ -1,11 +1,11 @@
-import { Client } from "./index"
+import { Client, get_client_by_field_value } from "./index"
 import mqtt from "mqtt"
 
 class MQTT {
     private readonly socket: mqtt.Client
-    private readonly clients: Map<string, Client>
+    private readonly clients: Client[]
     private readonly handlers: Map<string, (data: Buffer) => void> = new Map();
-    constructor(url: string, clients: Map<string, Client>) {
+    constructor(url: string, clients: Client[]) {
         this.socket = mqtt.connect(url)
         this.clients = clients
         this.AutoExecHandlers()
@@ -31,9 +31,10 @@ class MQTT {
         })
     }
     private OnConnection(data: Buffer): void {
-        const uid = data.toString()
-        const client = this.clients.get(uid)
+        const md5_uid = data.toString()
+        const client = get_client_by_field_value("uid_md5", md5_uid)
         if (client !== undefined) {
+            const uid = client.uid
             client.con = 1
             client.web_socket?.emit("info", client.con)
             this.socket.publish(uid+":conn", "1")
@@ -52,11 +53,11 @@ class MQTT {
             }, 5000)
             return
         }
-        this.socket.publish(uid+":conn", "0")
+        this.socket.publish(md5_uid+":conn", "0")
     }
     private OnPing(data: Buffer): void {
         const uid = data.toString()
-        const client = this.clients.get(uid)
+        const client = get_client_by_field_value("uid_md5", uid)
         if (client !== undefined) {
             client._pinged = true;
         }

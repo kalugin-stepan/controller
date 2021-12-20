@@ -3,6 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.get_client_by_field_value = void 0;
 const express_1 = __importDefault(require("express"));
 const app = (0, express_1.default)();
 const fs_1 = __importDefault(require("fs"));
@@ -19,12 +20,21 @@ const database_1 = require("./database");
 const mqtt_1 = require("./mqtt");
 const root = path_1.default.dirname(__dirname);
 const config = JSON.parse(fs_1.default.readFileSync(path_1.default.join(root, "config.json"), "utf-8"));
-const clients = new Map();
+const clients = [];
 const rooms = new Map();
 const database = new database_1.DataBase("db.sqlite");
 const sender = new sender_1.Sender(config.email, config.password);
 const mqtt = new mqtt_1.MQTT(`mqtt://${config.mqtt_host}:${config.mqtt_port}`, clients);
 const templ = fs_1.default.readFileSync(path_1.default.join(root, "template.ino"), "utf-8");
+function get_client_by_field_value(field_name, field_value) {
+    for (const client of clients) {
+        if (client[field_name] === field_value) {
+            return client;
+        }
+    }
+    return undefined;
+}
+exports.get_client_by_field_value = get_client_by_field_value;
 function get_zip(uid, ssid, password) {
     const zip = new adm_zip_1.default();
     const data = Buffer.from(templ.replace("{wifi}", ssid)
@@ -41,7 +51,7 @@ app.use(express_1.default.static(root));
 app.use((0, cookie_parser_1.default)());
 database.getUsers().then((users) => {
     users.forEach((user) => {
-        clients.set(user.uid, { con: 0, login: user.login, uid: user.uid, web_socket: null, _pinged: true });
+        clients.push({ con: 0, login: user.login, uid: user.uid, uid_md5: (0, md5_1.default)(user.uid).toString(), web_socket: null, _pinged: true });
     });
 });
 async function is_loged_in(req) {
@@ -117,12 +127,10 @@ app.get("/users", async (req, res) => {
 });
 app.get("/get_users", async (req, res) => {
     if (await is_loged_in(req)) {
-        const keys = clients.keys();
         const info = [];
-        for (const key of keys) {
-            const user = clients.get(key);
-            if (user.con === 1) {
-                info.push(user.login);
+        for (const client of clients) {
+            if (client.con === 1) {
+                info.push(client.login);
             }
         }
         res.send(JSON.stringify({ "info": info }));
@@ -175,7 +183,7 @@ app.post("/register", async (req, res) => {
         if (!await database.email_exists(email) && !await database.login_exists(login)) {
             sender.send(email, "Active", "http://" + config.host + ":" + config.port + "/active/" + code);
             database.add_usr(login, password_md5, email, uid, code);
-            clients.set(uid, { con: 0, login: login, uid: uid, web_socket: null, _pinged: true });
+            clients.push({ con: 0, login: login, uid: uid, uid_md5: (0, md5_1.default)(uid).toString(), web_socket: null, _pinged: true });
             res.send("На вашу почту пришло сообщение с активацией аккаунта.");
         }
         else {
@@ -236,7 +244,7 @@ app.get("/active/:code", (req, res) => {
 io.on("connection", (socket) => {
     let client;
     socket.on("info", (data) => {
-        const c = clients.get(data);
+        const c = get_client_by_field_value("uid", data);
         if (c !== undefined) {
             client = c;
             client.web_socket = socket;
