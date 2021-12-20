@@ -2,6 +2,7 @@
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
 #include <ArduinoJson.h>
+#include <MD5Builder.h>
 
 #define ssid "{wifi}"
 #define password "{password}"
@@ -27,6 +28,8 @@ DynamicJsonDocument json(1024);
 
 WiFiClient wifi_client;
 PubSubClient mqtt_client(wifi_client);
+
+char md5_uid[36];
 
 bool eq(const char* str1, const char* str2) {
     size_t i = 0;
@@ -112,12 +115,12 @@ void mqtt_callback(char* topic, byte* data, unsigned int len) {
         deserializeJson(json, data);
         int x = json["X"];
         int y = json["Y"];
+        Serial.printf("X: %d, Y: %d\n", x, y);
         go(x, y);
         return;
     }
     if (eq(topic, topic_ping)) {
-        mqtt_client.publish("ping", uid);
-        Serial.println("ping");
+        mqtt_client.publish("ping", md5_uid);
         return;
     }
     if (eq(topic, topic_conn)) {
@@ -140,7 +143,13 @@ void setup() {
     mqtt_client.subscribe(topic_ping);
     mqtt_client.subscribe(topic_conn);
     mqtt_client.setCallback(mqtt_callback);
-    mqtt_client.publish("connection", uid);
+    MD5Builder md5;
+    md5.begin();
+    md5.add(uid);
+    md5.calculate();
+    md5.getChars(md5_uid);
+    Serial.println(md5_uid);
+    mqtt_client.publish("connection", md5_uid);
 }
 
 void loop() {
