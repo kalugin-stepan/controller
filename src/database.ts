@@ -1,5 +1,4 @@
 import sqlite from "sqlite3"
-import path from "path"
 
 type bool = 1 | 0
 
@@ -26,7 +25,7 @@ class DataBase {
         return new Promise((res, rej) => {
             this.db.exec(cmd, (err) => {
                 if (err) {
-                    rej()
+                    rej(err)
                 }
                 res()
             })

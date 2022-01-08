@@ -14,7 +14,7 @@ class DataBase {
         return new Promise((res, rej) => {
             this.db.exec(cmd, (err) => {
                 if (err) {
-                    rej();
+                    rej(err);
                 }
                 res();
             });
