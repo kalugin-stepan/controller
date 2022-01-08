@@ -155,6 +155,7 @@ void setup() {
 void loop() {
     if (!mqtt_client.connected()) {
         connect_mqtt();
+        mqtt_client.publish("connection", md5_uid);
     }
     mqtt_client.loop();
 }
