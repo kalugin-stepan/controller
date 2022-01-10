@@ -57,7 +57,7 @@ function get_zip(uid: string, ssid: string, password: string): Buffer {
     .replace("{host}", config.mqtt_host)
     .replace("{port}", config.mqtt_port))
     zip.addFile("script/script.ino", data)
-    return zip.toBuffer();
+    return zip.toBuffer()
 }
 
 app.use(express.urlencoded({extended: true}))
