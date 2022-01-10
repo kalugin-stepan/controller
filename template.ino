@@ -4,11 +4,11 @@
 #include <ArduinoJson.h>
 #include <MD5Builder.h>
 
-#define ssid "{wifi}"
-#define password "{password}"
+#define ssid "wf"
+#define password "50809671"
 
-#define mqtt_host "{host}"
-#define mqtt_port "{port}"
+#define mqtt_host "broker.emqx.io"
+#define mqtt_port 1883
 
 #define ENA 4
 #define IN1 0
@@ -18,11 +18,11 @@
 #define IN3 12
 #define IN4 13
 
-#define uid "{uid}"
+#define uid "3430deab-320c-4d5b-ace1-9d8efe0b4363"
 
-#define topic_pos "{uid}:pos"
-#define topic_ping "{uid}:ping"
-#define topic_conn "{uid}:conn"
+#define topic_pos "3430deab-320c-4d5b-ace1-9d8efe0b4363:pos"
+#define topic_ping "3430deab-320c-4d5b-ace1-9d8efe0b4363:ping"
+#define topic_conn "3430deab-320c-4d5b-ace1-9d8efe0b4363:conn"
 
 DynamicJsonDocument json(1024);
 
@@ -69,17 +69,24 @@ void go(int x, int y) {
         return;
     }
 
-    int k = 1;
-    if (k < 0)
-        k = -1;
-
-    analogWrite(ENA, y*-10-x*5*k);
-    digitalWrite(IN1, LOW);
-    digitalWrite(IN2, HIGH);
-    
-    analogWrite(ENB, y*10+x*5*k);
-    digitalWrite(IN3, LOW);
-    digitalWrite(IN4, HIGH);
+     if (y >= 0) {
+        analogWrite(ENA, y*10-x*5);
+        digitalWrite(IN1, HIGH);
+        digitalWrite(IN2, LOW);
+        
+        analogWrite(ENB, y*10+x*5);
+        digitalWrite(IN3, HIGH);
+        digitalWrite(IN4, LOW);
+    }
+    else if (y < 0) {
+        analogWrite(ENA, y*-10+x*5);
+        digitalWrite(IN1, LOW);
+        digitalWrite(IN2, HIGH);
+        
+        analogWrite(ENB, y*-10-x*5);
+        digitalWrite(IN3, LOW);
+        digitalWrite(IN4, HIGH);
+    }
 }
 
 void connect_wifi() {
@@ -121,14 +128,6 @@ void mqtt_callback(char* topic, byte* data, unsigned int len) {
     }
     if (eq(topic, topic_ping)) {
         mqtt_client.publish("ping", md5_uid);
-        return;
-    }
-    if (eq(topic, topic_conn)) {
-        if (data[0] == '0') {
-            mqtt_client.disconnect();
-            WiFi.disconnect(true);
-            return;
-        }
         return;
     }
 }
