@@ -52,7 +52,7 @@ function get_client_by_field_value(field_name: keyof Client, field_value: any): 
 function get_zip(uid: string, ssid: string, password: string): Buffer {
     const zip = new AdmZip();
     const data = Buffer.from(templ.replace("{wifi}", ssid)
-    .replace("password", password)
+    .replace("{password}", password)
     .replaceAll("{uid}", uid)
     .replace("{host}", config.mqtt_host)
     .replace("{port}", config.mqtt_port))

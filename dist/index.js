@@ -38,7 +38,7 @@ exports.get_client_by_field_value = get_client_by_field_value;
 function get_zip(uid, ssid, password) {
     const zip = new adm_zip_1.default();
     const data = Buffer.from(templ.replace("{wifi}", ssid)
-        .replace("password", password)
+        .replace("{password}", password)
         .replaceAll("{uid}", uid)
         .replace("{host}", config.mqtt_host)
         .replace("{port}", config.mqtt_port));
