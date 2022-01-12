@@ -4,11 +4,11 @@
 #include <ArduinoJson.h>
 #include <MD5Builder.h>
 
-#define ssid "wf"
-#define password "50809671"
+#define ssid "{wifi}"
+#define password "{password}"
 
-#define mqtt_host "broker.emqx.io"
-#define mqtt_port 1883
+#define mqtt_host "{host}"
+#define mqtt_port {port}
 
 #define ENA 4
 #define IN1 0
@@ -18,11 +18,11 @@
 #define IN3 12
 #define IN4 13
 
-#define uid "3430deab-320c-4d5b-ace1-9d8efe0b4363"
+#define uid "{uid}"
 
-#define topic_pos "3430deab-320c-4d5b-ace1-9d8efe0b4363:pos"
-#define topic_ping "3430deab-320c-4d5b-ace1-9d8efe0b4363:ping"
-#define topic_conn "3430deab-320c-4d5b-ace1-9d8efe0b4363:conn"
+#define topic_pos "{uid}:pos"
+#define topic_ping "{uid}:ping"
+#define topic_conn "{uid}:conn"
 
 DynamicJsonDocument json(1024);
 
