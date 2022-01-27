@@ -137,7 +137,7 @@ app.get("/profile", async (req, res) => {
 app.get("/users", async (req, res) => {
     if (await is_loged_in(req)) {
         const vals : IterableIterator<Client> = clients.values()
-        const info = []
+        const info: string[] = []
         for (const val of vals) {
             if (val.con === 1) {
                 info.push(val.login)
@@ -152,7 +152,7 @@ app.get("/users", async (req, res) => {
 
 app.get("/get_users", async (req, res) => {
     if (await is_loged_in(req)) {
-        const info = []
+        const info: string[] = [];
         for (const client of clients) {
             if (client.con === 1) {
                 info.push(client.login)
