@@ -1,1 +1,1 @@
-node-sass ./scss -o ./css
+sass ./scss ./css

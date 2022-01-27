@@ -2,3 +2,4 @@
 /static/.sass-cache
 /.vscode
 db.sqlite
+package-lock.json
