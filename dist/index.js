@@ -24,7 +24,7 @@ const clients = [];
 const rooms = new Map();
 const database = new database_1.DataBase("db.sqlite");
 const sender = new sender_1.Sender(config.email, config.password);
-const mqtt = new mqtt_1.MQTT(`mqtt://${config.mqtt_host}:${config.mqtt_port}`, clients);
+const mqtt = new mqtt_1.MQTT(`mqtt://${config.mqtt_host}:${config.mqtt_port}`);
 const templ = fs_1.default.readFileSync(path_1.default.join(root, "template.ino"), "utf-8");
 function get_client_by_field_value(field_name, field_value) {
     for (const client of clients) {

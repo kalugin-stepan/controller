@@ -7,10 +7,9 @@ exports.MQTT = void 0;
 const index_1 = require("./index");
 const mqtt_1 = __importDefault(require("mqtt"));
 class MQTT {
-    constructor(url, clients) {
+    constructor(url) {
         this.handlers = new Map();
         this.socket = mqtt_1.default.connect(url);
-        this.clients = clients;
         this.AutoExecHandlers();
         this.SetHandlers();
     }

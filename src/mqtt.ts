@@ -3,11 +3,9 @@ import mqtt from "mqtt"
 
 class MQTT {
     private readonly socket: mqtt.Client
-    private readonly clients: Client[]
     private readonly handlers: Map<string, (data: Buffer) => void> = new Map();
-    constructor(url: string, clients: Client[]) {
+    constructor(url: string) {
         this.socket = mqtt.connect(url)
-        this.clients = clients
         this.AutoExecHandlers()
         this.SetHandlers()
     }

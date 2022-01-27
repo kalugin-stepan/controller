@@ -36,7 +36,7 @@ const database = new DataBase("db.sqlite")
 
 const sender = new Sender(config.email, config.password)
 
-const mqtt = new MQTT(`mqtt://${config.mqtt_host}:${config.mqtt_port}`, clients)
+const mqtt = new MQTT(`mqtt://${config.mqtt_host}:${config.mqtt_port}`)
 
 const templ = fs.readFileSync(path.join(root, "template.ino"), "utf-8")
 
