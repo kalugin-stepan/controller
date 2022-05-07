@@ -12,14 +12,13 @@ import cookieParser from "cookie-parser"
 const {v4 : uuid} = require("uuid")
 import {Sender} from "./sender"
 import {DataBase, User, bool} from "./database"
-import { MQTT } from "./mqtt"
+import MQTT from "./mqtt"
 
 export {Client, get_client_by_field_value}
 interface Client {
     con : bool
     login : string
     uid: string
-    uid_md5: string
     web_socket: Socket | null
     _pinged: boolean
 }
@@ -69,7 +68,7 @@ app.use(cookieParser())
 
 database.getUsers().then((users : Array<User>) => {
     users.forEach((user : User) => {
-        clients.push({con : 0, login : user.login, uid: user.uid, uid_md5: md5(user.uid).toString(), web_socket: null, _pinged: true})
+        clients.push({con : 0, login : user.login, uid: user.uid, web_socket: null, _pinged: true})
     })
 })
 
@@ -214,7 +213,7 @@ app.post("/register", async (req, res) => {
         if (!await database.email_exists(email) && !await database.login_exists(login)) {
             sender.send(email, "Active", "http://" + config.host + ":" + config.port + "/active/" + code)
             database.add_usr(login, password_md5, email, uid, code)
-            clients.push({con : 0, login : login, uid: uid, uid_md5: md5(uid).toString(), web_socket: null, _pinged: true})
+            clients.push({con : 0, login : login, uid: uid, web_socket: null, _pinged: true})
             res.send("На вашу почту пришло сообщение с активацией аккаунта.")
         }
         else {

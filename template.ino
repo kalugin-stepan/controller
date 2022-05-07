@@ -2,13 +2,12 @@
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
 #include <ArduinoJson.h>
-#include <MD5Builder.h>
 
-#define ssid "{wifi}"
-#define password "{password}"
+#define ssid "wf"
+#define password "2807KssM"
 
-#define mqtt_host "{host}"
-#define mqtt_port {port}
+#define mqtt_host "broker.emqx.io"
+#define mqtt_port 1883
 
 #define ENA 4
 #define IN1 0
@@ -18,18 +17,16 @@
 #define IN3 12
 #define IN4 13
 
-#define uid "{uid}"
+#define uid "de1bedf5-bea2-4117-9529-432d088ac36b"
 
-#define topic_pos "{uid}:pos"
-#define topic_ping "{uid}:ping"
-#define topic_conn "{uid}:conn"
+#define topic_pos "de1bedf5-bea2-4117-9529-432d088ac36b:pos"
+#define topic_ping "de1bedf5-bea2-4117-9529-432d088ac36b:ping"
+#define topic_conn "de1bedf5-bea2-4117-9529-432d088ac36b:conn"
 
 DynamicJsonDocument json(1024);
 
 WiFiClient wifi_client;
 PubSubClient mqtt_client(wifi_client);
-
-char md5_uid[36];
 
 bool eq(const char* str1, const char* str2) {
     size_t i = 0;
@@ -127,7 +124,7 @@ void mqtt_callback(char* topic, byte* data, unsigned int len) {
         return;
     }
     if (eq(topic, topic_ping)) {
-        mqtt_client.publish("ping", md5_uid);
+        mqtt_client.publish("ping", uid);
         return;
     }
 }
@@ -142,19 +139,13 @@ void setup() {
     mqtt_client.subscribe(topic_ping);
     mqtt_client.subscribe(topic_conn);
     mqtt_client.setCallback(mqtt_callback);
-    MD5Builder md5;
-    md5.begin();
-    md5.add(uid);
-    md5.calculate();
-    md5.getChars(md5_uid);
-    Serial.println(md5_uid);
-    mqtt_client.publish("connection", md5_uid);
+    mqtt_client.publish("connection", uid);
 }
 
 void loop() {
     if (!mqtt_client.connected()) {
         connect_mqtt();
-        mqtt_client.publish("connection", md5_uid);
+        mqtt_client.publish("connection", uid);
     }
     mqtt_client.loop();
 }
