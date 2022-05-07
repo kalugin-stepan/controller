@@ -3,6 +3,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.Sender = void 0;
 const nodemailer_1 = require("nodemailer");
 class Sender {
+    email;
+    sender;
     constructor(email, password) {
         this.email = email;
         this.sender = (0, nodemailer_1.createTransport)({

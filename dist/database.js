@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.DataBase = void 0;
 const sqlite3_1 = __importDefault(require("sqlite3"));
 class DataBase {
+    db;
     constructor(db_path) {
         this.db = new sqlite3_1.default.Database(db_path);
         this.exec("create table if not exists users (id integer primary key autoincrement unique, login varchar(30), email varchar(30), password varchar(32), uid varchar(36), active tinyint(1), code varchar(36))");

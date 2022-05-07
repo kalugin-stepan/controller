@@ -17,14 +17,14 @@ const cookie_parser_1 = __importDefault(require("cookie-parser"));
 const { v4: uuid } = require("uuid");
 const sender_1 = require("./sender");
 const database_1 = require("./database");
-const mqtt_1 = require("./mqtt");
+const mqtt_1 = __importDefault(require("./mqtt"));
 const root = path_1.default.dirname(__dirname);
 const config = JSON.parse(fs_1.default.readFileSync(path_1.default.join(root, "config.json"), "utf-8"));
 const clients = [];
 const rooms = new Map();
 const database = new database_1.DataBase("db.sqlite");
 const sender = new sender_1.Sender(config.email, config.password);
-const mqtt = new mqtt_1.MQTT(`mqtt://${config.mqtt_host}:${config.mqtt_port}`);
+const mqtt = new mqtt_1.default(`mqtt://${config.mqtt_host}:${config.mqtt_port}`);
 const templ = fs_1.default.readFileSync(path_1.default.join(root, "template.ino"), "utf-8");
 function get_client_by_field_value(field_name, field_value) {
     for (const client of clients) {
@@ -51,7 +51,7 @@ app.use(express_1.default.static(root));
 app.use((0, cookie_parser_1.default)());
 database.getUsers().then((users) => {
     users.forEach((user) => {
-        clients.push({ con: 0, login: user.login, uid: user.uid, uid_md5: (0, md5_1.default)(user.uid).toString(), web_socket: null, _pinged: true });
+        clients.push({ con: 0, login: user.login, uid: user.uid, web_socket: null, _pinged: true });
     });
 });
 async function is_loged_in(req) {
@@ -183,7 +183,7 @@ app.post("/register", async (req, res) => {
         if (!await database.email_exists(email) && !await database.login_exists(login)) {
             sender.send(email, "Active", "http://" + config.host + ":" + config.port + "/active/" + code);
             database.add_usr(login, password_md5, email, uid, code);
-            clients.push({ con: 0, login: login, uid: uid, uid_md5: (0, md5_1.default)(uid).toString(), web_socket: null, _pinged: true });
+            clients.push({ con: 0, login: login, uid: uid, web_socket: null, _pinged: true });
             res.send("На вашу почту пришло сообщение с активацией аккаунта.");
         }
         else {
