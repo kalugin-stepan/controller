@@ -19,47 +19,46 @@
 ## Пример клиентского приложения
 
 ```js
-// Подключение библиотек MQTT и MD5
-const mqtt = require("mqtt")
-const md5 = require("md5")
-const { exit } = require("process")
+// Подключение библиотеки MQTT
+const mqtt = require('mqtt')
+const fs = require('fs')
+const { exit } = require('process')
+
+const config = JSON.parse(fs.readFileSync('./config.json'))
 
 // Подключение к MQTT серверу
-const conn = mqtt.connect("mqtt://broker.emqx.io:1883")
+const conn = mqtt.connect(`mqtt://${config.mqtt_host}:${config.mqtt_port}`)
 
 // ID пользователя
-const uid = "3430deab-320c-4d5b-ace1-9d8efe0b4363"
-
-// ID пользователя закодированный в через md5
-const md5_uid = md5(uid)
+const uid = '3430deab-320c-4d5b-ace1-9d8efe0b4363'
 
 // Отправка запроса на соеденение с сервером,
 // с вложенным ID пользователя закодированным в через md5
-conn.publish("connection", md5_uid)
+conn.publish('connection', uid)
 
 // Подписка на ответы и информацию от сервера,
-// в фориате "ID:команда"
-conn.subscribe(uid+":pos")
-conn.subscribe(uid+":ping")
-conn.subscribe(uid+":conn")
+// в фориате 'ID:команда'
+conn.subscribe(uid+':pos')
+conn.subscribe(uid+':ping')
+conn.subscribe(uid+':conn')
 
-conn.on("message", (topic, data) => {
-    if (topic === uid+":pos") {
+conn.on('message', (topic, data) => {
+    if (topic === uid+':pos') {
         // Приём, конвертация и обработка данных с сервера
         console.log(JSON.parse(data))
         return
     }
-    if (topic === uid+":ping") {
+    if (topic === uid+':ping') {
         // Проверка соеденения с сервером методом ping-а
-        conn.publish("ping", md5_uid)
+        conn.publish('ping', uid)
         return
     }
-    if (topic === uid+":conn") {
+    if (topic === uid+':conn') {
         // Обработка ответа на запроса на подключения к серверу
-        // Если ответ равен "0" то подключение отвергнуто,
+        // Если ответ равен '0' то подключение отвергнуто,
         // и тогда клиентское приложение закрывает соеденение
         const answer = data.toString()
-        if (answer === "0") {
+        if (answer === '0') {
             conn.end(true)
             exit()
         }
