@@ -14,7 +14,6 @@
         const socket = io.connect();
     </script>
     <script src="/public/js/JoyStick.js"></script>
-    <script src="/public/js/chat.js"></script>
     <script src="/public/js/header.js"></script>
 </head>
 <body>
@@ -26,8 +25,6 @@
     <div style="display: none;" name="box"></div>
     <%- include("./blocks/footer.ejs") %>
     <script>
-        $('<li class="header__item"><a class="header__link" name="join">Join room</a></li>')
-        .insertAfter("body > header > div > div > ul > li:nth-child(3)");
         const joy = $("#joy");
         function update_size() {
             if (window.innerWidth > window.innerHeight) {
@@ -43,17 +40,10 @@
             app.joy.Resize();
         });
         const app = new App("#joy", socket);
-        $("title").text("Joystick: " + app.uid);
+        $("title").text("Joystick");
         setInterval(() => {
             app.SendPos();
-        }, 1);
-        const chat = new Chat(new AudioFactory($('div[name="box"]')), socket);
-        $("a[name=\"join\"]").click(() => {
-            const room_id = prompt("room id?");
-            if (room_id) {
-                chat.Join(room_id);
-            }
-        });
+        }, 30);
     </script>
 </body>
 </html>

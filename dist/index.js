@@ -21,7 +21,6 @@ const mqtt_1 = __importDefault(require("./mqtt"));
 const root = path_1.default.dirname(__dirname);
 const config = JSON.parse(fs_1.default.readFileSync(path_1.default.join(root, "config.json"), "utf-8"));
 const clients = [];
-const rooms = new Map();
 const database = new database_1.DataBase("db.sqlite");
 const sender = new sender_1.Sender(config.email, config.password);
 const mqtt = new mqtt_1.default(`mqtt://${config.mqtt_host}:${config.mqtt_port}`);
@@ -134,13 +133,6 @@ app.get("/get_users", async (req, res) => {
             }
         }
         res.send(JSON.stringify({ "info": info }));
-        return;
-    }
-    res.redirect("/login");
-});
-app.get("/videos", async (req, res) => {
-    if (await is_loged_in(req)) {
-        res.render("videos.ejs");
         return;
     }
     res.redirect("/login");
@@ -259,29 +251,6 @@ io.on("connection", (socket) => {
     socket.on("disconnect", () => {
         if (client !== undefined) {
             client.web_socket = null;
-        }
-        if (peer_id !== "" && room !== undefined && room_id !== "") {
-            const index = room.indexOf(peer_id);
-            if (index > -1) {
-                room.splice(index, 1);
-            }
-            io.emit("disconn", peer_id);
-        }
-    });
-    let peer_id = "";
-    let room_id = "";
-    let room;
-    socket.on("join", (p_id, r_id) => {
-        peer_id = p_id;
-        room_id = r_id;
-        room = rooms.get(room_id);
-        if (room === undefined) {
-            room = [];
-            rooms.set(room_id, room);
-        }
-        if (room !== undefined) {
-            room.push(peer_id);
-            socket.emit("peers", room);
         }
     });
 });
