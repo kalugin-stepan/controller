@@ -32,7 +32,10 @@ class MQTT {
         const uid = data.toString()
         const client = get_client_by_field_value('uid', uid)
         if (client !== undefined) {
-            const uid = client.uid
+            if (client?.con === 1) {
+                this.socket.publish(uid+':conn', '0')
+                return
+            }
             client.con = 1
             client.web_socket?.emit('info', client.con)
             this.socket.publish(uid+':conn', '1')
