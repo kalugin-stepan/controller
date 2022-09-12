@@ -38,8 +38,8 @@ class MQTT {
             this.socket.publish(uid+':conn', '1')
             const ping = setInterval(() => {
                 if (client._pinged) {
-                    this.socket.publish(uid+':ping', '')
                     client._pinged = false
+                    this.socket.publish(uid+':ping', '')
                     return
                 }
                 if (!client._pinged) {
@@ -57,7 +57,7 @@ class MQTT {
         const uid = data.toString()
         const client = get_client_by_field_value('uid', uid)
         if (client !== undefined) {
-            client._pinged = true;
+            client._pinged = true
         }
     }
 }
