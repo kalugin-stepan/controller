@@ -1,5 +1,3 @@
-"use strict";
-/// <reference path="../../node_modules/@types/jquery/index.d.ts"/>
 function is_vailid(password) {
     if (password.length >= 8) {
         return true;
@@ -12,5 +10,5 @@ function check(f) {
         f.submit();
         return;
     }
-    alert("Password is not vailid.");
+    alert('Password is not vailid.');
 }

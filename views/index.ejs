@@ -6,14 +6,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Jsoystick</title>
     <link rel="stylesheet" href="/public/css/style.css">
+    <script>
+        const mqtt_url = '<%= mqtt_url %>'
+    </script>
     <script src="/node_modules/jquery/dist/jquery.min.js"></script>
     <script src="/public/js/joy.js"></script>
-    <script src="/node_modules/socket.io-client/dist/socket.io.min.js"></script>
-    <script src="/node_modules/peerjs/dist/peerjs.min.js"></script>
-    <script>
-        const socket = io.connect();
-    </script>
-    <script src="/public/js/JoyStick.js"></script>
+    <script src="/node_modules/mqtt/dist/mqtt.min.js"></script>
+    <script src="/public/js/app.js"></script>
     <script src="/public/js/header.js"></script>
 </head>
 <body>
@@ -25,25 +24,36 @@
     <div style="display: none;" name="box"></div>
     <%- include("./blocks/footer.ejs") %>
     <script>
-        const joy = $("#joy");
+        const con = $('h2[name="con"]')
+
+        const joy = $('#joy')
         function update_size() {
             if (window.innerWidth > window.innerHeight) {
-            joy.height(window.innerHeight / 2);
+                joy.height(window.innerHeight / 2)
             }
             else {
                 joy.height(window.innerWidth / 2)
             }
         }
-        update_size();
-        addEventListener("resize", (e) => {
-            update_size();
-            app.joy.Resize();
-        });
-        const app = new App("#joy", socket);
-        $("title").text("Joystick");
+        update_size()
+        const app = new App('#joy', mqtt_url)
+        app.on_connect(() => {
+            con.text('Connected')
+            con.addClass('connected')
+            con.removeClass('disconnected')
+        })
+        app.on_disconnect(() => {
+            con.text('Disconnected')
+            con.addClass('disconnected')
+            con.removeClass('connected')
+        })
+        addEventListener('resize', (e) => {
+            update_size()
+            app.joy.Resize()
+        })
         setInterval(() => {
-            app.SendPos();
-        }, 30);
+            app.SendPos()
+        }, 70)
     </script>
 </body>
 </html>

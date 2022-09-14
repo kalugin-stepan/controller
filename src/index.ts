@@ -5,46 +5,21 @@ import path from 'path'
 import AdmZip from 'adm-zip'
 import { createServer } from 'http'
 const server = createServer(app)
-import { Server, Socket } from 'socket.io'
-const io = new Server(server)
 import md5 from 'md5'
 import cookieParser from 'cookie-parser'
 const {v4 : uuid} = require('uuid')
 import {Sender} from './sender'
-import {DataBase, User, bool} from './database'
-import MQTT from './mqtt'
-
-export {Client, get_client_by_field_value}
-interface Client {
-    con : bool
-    login : string
-    uid: string
-    web_socket: Socket | null
-    _pinged: boolean
-}
+import {DataBase, User} from './database'
 
 const root : string = path.dirname(__dirname)
 
 const config = JSON.parse(fs.readFileSync(path.join(root, 'config.json'), 'utf-8'))
 
-const clients: Client[] = []
-
 const database = new DataBase('db.sqlite')
 
 const sender = new Sender(config.email, config.password)
 
-const mqtt = new MQTT(`mqtt://${config.mqtt_host}:${config.mqtt_port}`)
-
 const templ = fs.readFileSync(path.join(root, 'template.ino'), 'utf-8')
-
-function get_client_by_field_value(field_name: keyof Client, field_value: any): Client | undefined {
-    for (const client of clients) {
-        if (client[field_name] === field_value) {
-            return client
-        }
-    }
-    return undefined
-}
 
 function get_zip(uid: string, ssid: string, password: string): Buffer {
     const zip = new AdmZip();
@@ -64,22 +39,14 @@ app.use(express.static(root))
 
 app.use(cookieParser())
 
-database.getUsers().then((users : Array<User>) => {
-    users.forEach((user : User) => {
-        clients.push({con : 0, login : user.login, uid: user.uid, web_socket: null, _pinged: true})
-    })
-})
-
 async function is_loged_in(req: Request): Promise<boolean> {
     const id : number = parseInt(req.cookies.id)
-    const login : string = req.cookies.login
-    const email : string = req.cookies.email
     const password : string = req.cookies.password
     const uid : string = req.cookies.uid
-    if (id && login && email && password && uid) {
+    if (id && password && uid) {
         const user = await database.getUserByID(id)
         if (user !== null) {
-            return login === user.login && email === user.email && user.password === password && user.uid === uid && user.active === 1
+            return user.password === password && user.uid === uid && user.active === 1
         }
     }
     return false
@@ -95,9 +62,7 @@ async function login(req: Request, res: Response): Promise<boolean> {
             if (user !== null) {
                 if (user.password === password_md5 && user.active === 1) {
                     res.cookie('id', user.id)
-                    res.cookie('login', user.login)
                     res.cookie('password', user.password)
-                    res.cookie('email', user.email)
                     res.cookie('uid', user.uid)
                     return true
                 }
@@ -109,7 +74,7 @@ async function login(req: Request, res: Response): Promise<boolean> {
 
 app.get('/', async (req, res) => {
     if (await is_loged_in(req)) {
-        res.render('index.ejs')
+        res.render('index.ejs', {mqtt_url: `ws://${config.mqtt_host}:${config.mqtt_port}/mqtt`})
         return
     }
     res.redirect('/login')
@@ -126,36 +91,6 @@ app.get('/script.zip', (req, res) => {
 app.get('/profile', async (req, res) => {
     if (await is_loged_in(req)) {
         res.render('profile.ejs')
-        return
-    }
-    res.redirect('/login')
-})
-
-app.get('/users', async (req, res) => {
-    if (await is_loged_in(req)) {
-        const vals : IterableIterator<Client> = clients.values()
-        const info: string[] = []
-        for (const val of vals) {
-            if (val.con === 1) {
-                info.push(val.login)
-            }
-        }
-        console.log(info)
-        res.render('users.ejs', {users : info})
-        return
-    }
-    res.redirect('/login')
-})
-
-app.get('/get_users', async (req, res) => {
-    if (await is_loged_in(req)) {
-        const info: string[] = [];
-        for (const client of clients) {
-            if (client.con === 1) {
-                info.push(client.login)
-            }
-        }
-        res.send(JSON.stringify({'info': info}))
         return
     }
     res.redirect('/login')
@@ -179,12 +114,9 @@ app.post('/login', async (req, res) => {
 
 app.get('/logout', (req, res) => {
     res.clearCookie('id')
-    res.clearCookie('login')
     res.clearCookie('password')
-    res.clearCookie('email')
-    res.clearCookie('login')
     res.clearCookie('uid')
-    res.render('logout.ejs')
+    res.redirect('/login')
 })
 
 app.get('/register', (req, res) => {
@@ -203,7 +135,6 @@ app.post('/register', async (req, res) => {
         if (!await database.email_exists(email) && !await database.login_exists(login)) {
             sender.send(email, 'Active', 'http://' + config.host + ':' + config.port + '/active/' + code)
             database.add_usr(login, password_md5, email, uid, code)
-            clients.push({con : 0, login : login, uid: uid, web_socket: null, _pinged: true})
             res.send('На вашу почту пришло сообщение с активацией аккаунта.')
         }
         else {
@@ -265,30 +196,6 @@ app.post('/change_password/:code', async (req, res) => {
 app.get('/active/:code', (req, res) => {
     database.active(req.params.code, uuid())
     res.redirect('/login')
-})
-
-
-
-io.on('connection', (socket: Socket) => {
-    let client: Client
-    socket.on('info', (data: string) => {
-        const c = get_client_by_field_value('uid', data)
-        if (c !== undefined) {
-            client = c
-            client.web_socket = socket
-            socket.emit('info', client.con)
-        }
-    })
-    socket.on('pos', (data: string) => {
-        if (client !== undefined && client.con === 1) {
-            mqtt.emit(client.uid+':pos', data)
-        }
-    })
-    socket.on('disconnect', () => {
-        if (client !== undefined) {
-            client.web_socket = null
-        }
-    })
 })
 
 server.listen(config.port)
