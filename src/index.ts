@@ -184,7 +184,6 @@ app.post('/register', async (req, res) => {
         &&
         await register(username, email, password)
     ) {
-        res.send('На вашу почту пришло сообщение с активацией аккаунта.')
         res.redirect('/login')
         return
     }
