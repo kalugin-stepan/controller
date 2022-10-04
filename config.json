@@ -1,1 +1,1 @@
-{"host": "localhost", "port": 80, "email": "example@gmail.com", "password": "password", "mqtt_host": "broker.emqx.io", "mqtt_port": 1883}
+{"host": "localhost", "port": 80, "email": "example@gmail.com", "password": "password", "mqtt_host": "broker.emqx.io", "mqtt_port": 8083}
