@@ -3,8 +3,8 @@
 #include <PubSubClient.h>
 #include <ArduinoJson.h>
 
-#define ssid "wf"
-#define password "2807KssM"
+#define ssid "Izobretay_Luxury"
+#define password "SkazhiteI"
 
 #define mqtt_host "broker.emqx.io"
 #define mqtt_port 1883
@@ -17,16 +17,17 @@
 #define IN3 12
 #define IN4 13
 
-#define uid "de1bedf5-bea2-4117-9529-432d088ac36b"
+#define uid "3430deab-320c-4d5b-ace1-9d8efe0b4363"
 
-#define topic_pos "de1bedf5-bea2-4117-9529-432d088ac36b:pos"
-#define topic_ping "de1bedf5-bea2-4117-9529-432d088ac36b:ping"
-#define topic_conn "de1bedf5-bea2-4117-9529-432d088ac36b:conn"
+#define topic_pos "3430deab-320c-4d5b-ace1-9d8efe0b4363:pos"
+#define topic_con "3430deab-320c-4d5b-ace1-9d8efe0b4363:con"
 
 DynamicJsonDocument json(1024);
 
 WiFiClient wifi_client;
 PubSubClient mqtt_client(wifi_client);
+
+static unsigned long last_ping_time;
 
 bool eq(const char* str1, const char* str2) {
     size_t i = 0;
@@ -37,13 +38,6 @@ bool eq(const char* str1, const char* str2) {
         i++;
     }
     return true;
-}
-
-void print_bytes(byte* bytes, unsigned int len) {
-    for (unsigned int x = 0; x < len; x++) {
-        Serial.print((char)bytes[x]);
-    }
-    Serial.print("\n");
 }
 
 void setup_pins() {
@@ -67,20 +61,21 @@ void go(int x, int y) {
     }
 
      if (y >= 0) {
-        analogWrite(ENA, y*10-x*5);
+        analogWrite(ENA, abs(y*10-x*5));
         digitalWrite(IN1, HIGH);
         digitalWrite(IN2, LOW);
         
-        analogWrite(ENB, y*10+x*5);
+        analogWrite(ENB, y*10);
         digitalWrite(IN3, HIGH);
         digitalWrite(IN4, LOW);
     }
     else if (y < 0) {
-        analogWrite(ENA, y*-10+x*5);
+        y *= -1;
+        analogWrite(ENA, y*10);
         digitalWrite(IN1, LOW);
         digitalWrite(IN2, HIGH);
         
-        analogWrite(ENB, y*-10-x*5);
+        analogWrite(ENB, abs(y*10-x*5));
         digitalWrite(IN3, LOW);
         digitalWrite(IN4, HIGH);
     }
@@ -111,22 +106,14 @@ void connect_mqtt() {
         Serial.println("Connection failed");
         delay(5000);
     }
-    
 }
 
 void mqtt_callback(char* topic, byte* data, unsigned int len) {
-    if (eq(topic, topic_pos)) {
-        deserializeJson(json, data);
-        int x = json["X"];
-        int y = json["Y"];
-        Serial.printf("X: %d, Y: %d\n", x, y);
-        go(x, y);
-        return;
-    }
-    if (eq(topic, topic_ping)) {
-        mqtt_client.publish("ping", uid);
-        return;
-    }
+    deserializeJson(json, data);
+    int x = json["X"];
+    int y = json["Y"];
+    Serial.printf("X: %d, Y: %d\n", x, y);
+    go(x, y);
 }
 
 void setup() {
@@ -136,16 +123,20 @@ void setup() {
     mqtt_client.setServer(mqtt_host, mqtt_port);
     connect_mqtt();
     mqtt_client.subscribe(topic_pos);
-    mqtt_client.subscribe(topic_ping);
-    mqtt_client.subscribe(topic_conn);
     mqtt_client.setCallback(mqtt_callback);
-    mqtt_client.publish("connection", uid);
+    mqtt_client.publish(topic_con, "");
+    last_ping_time = millis();
 }
 
 void loop() {
     if (!mqtt_client.connected()) {
         connect_mqtt();
-        mqtt_client.publish("connection", uid);
+        mqtt_client.publish(topic_con, "");
+    }
+    unsigned long cur_time = millis();
+    if (cur_time - last_ping_time > 2500) {
+        mqtt_client.publish(topic_con, "");
+        last_ping_time = cur_time;
     }
     mqtt_client.loop();
 }

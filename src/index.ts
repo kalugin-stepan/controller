@@ -7,15 +7,18 @@ import { createServer } from 'http'
 const server = createServer(app)
 import md5 from 'md5'
 import cookieParser from 'cookie-parser'
-const {v4 : uuid} = require('uuid')
-import {Sender} from './sender'
+const { v4 : uuid } = require('uuid')
 import {DataBase, User} from './database'
+import WebApi from './web_api'
+import { Sender } from './sender'
 
 const root : string = path.dirname(__dirname)
 
 const config = JSON.parse(fs.readFileSync(path.join(root, 'config.json'), 'utf-8'))
 
 const database = new DataBase('db.sqlite')
+
+const web_api = config.api_url !== null ? new WebApi(config.api_url) : null
 
 const sender = new Sender(config.email, config.password)
 
@@ -39,6 +42,10 @@ app.use(express.static(root))
 
 app.use(cookieParser())
 
+function is_password_valid(password: string): boolean {
+    return password.length >= 8
+}
+
 async function is_loged_in(req: Request): Promise<boolean> {
     const id : number = parseInt(req.cookies.id)
     const password : string = req.cookies.password
@@ -52,20 +59,42 @@ async function is_loged_in(req: Request): Promise<boolean> {
     return false
 }
 
-async function login(req: Request, res: Response): Promise<boolean> {
-    if (typeof req.body.login === 'string' && typeof req.body.password === 'string' || typeof req.query.login === 'string' && typeof req.query.password === 'string') {
-        const login : string = req.body.login ? req.body.login.toLowerCase(): req.query.login?.toString().toLowerCase()
-        const password : string = req.body.password ? req.body.password: req.query.password?.toString()
+async function register(username: string, email: string, password: string): Promise<boolean> {
+    if (is_password_valid(password)) {
         const password_md5 : string = md5(password).toString()
-        if (password.length >= 8) {
-            const user : User | null = await database.getUserByLogin(login)
-            if (user !== null) {
-                if (user.password === password_md5 && user.active === 1) {
+        const code : string = uuid()
+        const uid : string = uuid()
+        if (!await database.emailExists(email) && !await database.loginExists(username)) {
+            const is_registered_in_web_api = web_api !== null ? await web_api.register(username, password) : true
+            if (!is_registered_in_web_api) return false
+            await database.addUsr(username, password_md5, email, uid, code)
+            await database.active(code, uuid())
+            return true
+        }
+        return false
+    }
+    return false
+}
+
+async function login(username: string, password: string, res: Response): Promise<boolean | string> {
+    if (is_password_valid(password)) {
+        const password_md5 : string = md5(password).toString()
+        const user : User | null = await database.getUserByLogin(username)
+        if (user !== null) {
+            if (user.password === password_md5 && user.active === 1) {
+                if (web_api !== null) {
+                    const token = await web_api.login(username, password)
+                    if (token === null) return false
                     res.cookie('id', user.id)
-                    res.cookie('password', user.password)
+                    res.cookie('password', password_md5)
                     res.cookie('uid', user.uid)
-                    return true
+                    res.cookie('token', token)
+                    return token
                 }
+                res.cookie('id', user.id)
+                res.cookie('password', password_md5)
+                res.cookie('uid', user.uid)
+                return true
             }
         }
     }
@@ -97,7 +126,17 @@ app.get('/profile', async (req, res) => {
 })
 
 app.get('/login', async (req, res) => {
-    if (await login(req, res)) {
+    const username = req.query.username
+    const password = req.query.passowrd
+    if (
+        typeof username === 'string'
+        &&
+        typeof password === 'string'
+    ) {
+        const rez = await login(username, password, res)
+        if (typeof rez === 'string') {
+            
+        }
         res.redirect('/')
         return    
     }
@@ -105,7 +144,15 @@ app.get('/login', async (req, res) => {
 })
 
 app.post('/login', async (req, res) => {
-    if (await login(req, res)) {
+    const username = req.body.username
+    const password = req.body.password
+    if (
+        typeof username === 'string'
+        &&
+        typeof password === 'string'
+        &&
+        await login(username, password, res)
+    ) {
         res.redirect('/')
         return
     }
@@ -116,34 +163,32 @@ app.get('/logout', (req, res) => {
     res.clearCookie('id')
     res.clearCookie('password')
     res.clearCookie('uid')
+    res.clearCookie('token')
     res.redirect('/login')
 })
 
 app.get('/register', (req, res) => {
-    res.setHeader('Content-Type', 'text/html; charset=utf-8')
     res.render('register.ejs')
 })
 
 app.post('/register', async (req, res) => {
-    const login : string = req.body.login.toLowerCase()
-    const email : string = req.body.email.toLowerCase()
-    const password : string = req.body.password
-    const password_md5 : string = md5(req.body.password).toString()
-    const code : string = uuid()
-    const uid : string = uuid()
-    if (password.length >= 8) {
-        if (!await database.email_exists(email) && !await database.login_exists(login)) {
-            sender.send(email, 'Active', 'http://' + config.host + ':' + config.port + '/active/' + code)
-            database.add_usr(login, password_md5, email, uid, code)
-            res.send('На вашу почту пришло сообщение с активацией аккаунта.')
-        }
-        else {
-            res.send('<a href="/register">login или email уже существует</a>')
-        }
-    }
-    else {
+    const username = req.body.username
+    const email = req.body.email
+    const password = req.body.passowrd
+    if (
+        typeof username === 'string'
+        &&
+        typeof email === 'string'
+        &&
+        typeof password === 'string'
+        &&
+        await register(username, email, password)
+    ) {
+        res.send('На вашу почту пришло сообщение с активацией аккаунта.')
         res.redirect('/login')
+        return
     }
+    res.send('<a href="/register">login или email уже существует</a>')
 })
 
 app.get('/forgot_password', (req, res) => {
@@ -173,7 +218,7 @@ app.post('/forgot_password', async (req, res) => {
 })
 
 app.get('/change_password/:code', async (req, res) => {
-    const code_ex : boolean = await database.code_exists(req.params.code)
+    const code_ex : boolean = await database.codeExists(req.params.code)
     if (code_ex) {
         res.render('change_password.ejs')
         return
@@ -184,7 +229,7 @@ app.get('/change_password/:code', async (req, res) => {
 app.post('/change_password/:code', async (req, res) => {
     const password_md5 : string = md5(req.body.password).toString()
     const code : string = req.params.code
-    const code_ex : boolean = await database.code_exists(code)
+    const code_ex : boolean = await database.codeExists(code)
     if (code_ex) {
         database.changePasswordByCode(password_md5, code, uuid())
         res.send('<a href="/login">Пароль сменён</a>')

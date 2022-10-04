@@ -38,31 +38,31 @@ class DataBase {
             });
         });
     }
-    async add_usr(login, password, email, uid, code) {
+    async addUsr(login, password, email, uid, code) {
         await this.exec(`insert into users (login, email, password, uid, code, active) values("${login}", "${email}", "${password}", "${uid}", "${code}", "0")`);
     }
-    async uid_exists(uid) {
+    async uidExists(uid) {
         const users = await this.select(`select * from users where uid="${uid}"`);
         if (users.length === 1) {
             return true;
         }
         return false;
     }
-    async code_exists(code) {
+    async codeExists(code) {
         const users = await this.select(`select * from users where code="${code}"`);
         if (users.length === 1) {
             return true;
         }
         return false;
     }
-    async email_exists(email) {
+    async emailExists(email) {
         const users = await this.select(`select * from users where email="${email}"`);
         if (users.length) {
             return true;
         }
         return false;
     }
-    async login_exists(login) {
+    async loginExists(login) {
         const users = await this.select(`select * from users where login="${login}"`);
         if (users.length === 1) {
             return true;

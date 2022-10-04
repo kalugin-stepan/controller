@@ -50,11 +50,11 @@ class DataBase {
         })
     }
 
-    async add_usr(login : string, password : string, email : string, uid : string, code : string): Promise<void> {
+    async addUsr(login : string, password : string, email : string, uid : string, code : string): Promise<void> {
         await this.exec(`insert into users (login, email, password, uid, code, active) values("${login}", "${email}", "${password}", "${uid}", "${code}", "0")`)
     }
 
-    async uid_exists(uid : string): Promise<boolean> {
+    async uidExists(uid : string): Promise<boolean> {
         const users = await this.select(`select * from users where uid="${uid}"`) as User[]
         if (users.length === 1) {
             return true
@@ -62,7 +62,7 @@ class DataBase {
         return false
     }
 
-    async code_exists(code : string): Promise<boolean> {
+    async codeExists(code : string): Promise<boolean> {
         const users = await this.select(`select * from users where code="${code}"`)
         if (users.length === 1) {
             return true
@@ -70,7 +70,7 @@ class DataBase {
         return false
     }
 
-    async email_exists(email : string): Promise<boolean> {
+    async emailExists(email : string): Promise<boolean> {
         const users = await this.select(`select * from users where email="${email}"`)
         if (users.length) {
             return true
@@ -78,7 +78,7 @@ class DataBase {
         return false
     }
 
-    async login_exists(login : string): Promise<boolean> {
+    async loginExists(login : string): Promise<boolean> {
         const users = await this.select(`select * from users where login="${login}"`)
         if (users.length === 1) {
             return true
