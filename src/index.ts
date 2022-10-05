@@ -174,7 +174,7 @@ app.get('/register', (req, res) => {
 app.post('/register', async (req, res) => {
     const username = req.body.username
     const email = req.body.email
-    const password = req.body.passowrd
+    const password = req.body.password
     if (
         typeof username === 'string'
         &&
