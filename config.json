@@ -1,8 +1,8 @@
 {
     "host": "localhost",
     "port": 80,
-    "email": "example@gmail.com",
-    "password": "password",
+    "email": null,
+    "password": null,
     "mqtt_host": "broker.emqx.io",
     "mqtt_port": 8083,
     "api_url": null
