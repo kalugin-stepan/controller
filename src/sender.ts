@@ -1,4 +1,4 @@
-import {createTransport, Transporter, SentMessageInfo} from "nodemailer"
+import {createTransport, Transporter, SentMessageInfo} from 'nodemailer'
 
 export class Sender {
     email : string
@@ -6,7 +6,7 @@ export class Sender {
     constructor(email : string, password : string) {
         this.email = email
         this.sender = createTransport({
-            service : "gmail",
+            service : 'gmail',
             auth : {
                 user : email,
                 pass : password

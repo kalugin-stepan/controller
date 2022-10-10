@@ -3,21 +3,21 @@ class Joy {
         this.clicked = false
         this.pos = { X: 0, Y: 0 }
         this.parent = $(selector)
-        this.container = $("<div></div>")
-        this.container.css("border", "1px black solid")
-        this.container.css("margin", "auto")
-        this.container.css("touch-action", "none")
+        this.container = $('<div></div>')
+        this.container.css('border', '1px black solid')
+        this.container.css('margin', 'auto')
+        this.container.css('touch-action', 'none')
         this.container_size = this.parent.height()
         this.container.width(this.container_size)
         this.container.height(this.container_size)
         this.parent.append(this.container)
-        this.joy = $("<div></div>")
-        this.joy.css("border-radius", "50%")
-        this.joy.css("background", "green")
-        this.joy.css("position", "relative")
+        this.joy = $('<div></div>')
+        this.joy.css('border-radius', '50%')
+        this.joy.css('background', 'green')
+        this.joy.css('position', 'relative')
         this.joy_default_pos = this.container_size * 0.05
-        this.joy.css("top", this.joy_default_pos)
-        this.joy.css("left", this.joy_default_pos)
+        this.joy.css('top', this.joy_default_pos)
+        this.joy.css('left', this.joy_default_pos)
         this.joy_default_size = this.container_size * 0.9
         this.joy.height(this.joy_default_size)
         this.joy.width(this.joy_default_size)
@@ -26,12 +26,12 @@ class Joy {
         this.Events(selector)
     }
     Events(selector) {
-        $(document).on("mousedown", `${selector} > div`, this.MouseDown.bind(this))
-        $(document).on("touchstart", `${selector} > div`, this.TouchDown.bind(this))
-        $(document).on("mousemove", `${selector} > div`, this.MouseMove.bind(this))
-        $(document).on("touchmove", `${selector} > div`, this.TouchMove.bind(this))
-        $(document).on("mouseup", `${selector} > div`, this.MouseUp.bind(this))
-        $(document).on("touchend", `${selector} > div`, this.TouchUp.bind(this))
+        $(document).on('mousedown', `${selector} > div`, this.MouseDown.bind(this))
+        $(document).on('touchstart', `${selector} > div`, this.TouchDown.bind(this))
+        $(document).on('mousemove', `${selector} > div`, this.MouseMove.bind(this))
+        $(document).on('touchmove', `${selector} > div`, this.TouchMove.bind(this))
+        $(document).on('mouseup', `${selector} > div`, this.MouseUp.bind(this))
+        $(document).on('touchend', `${selector} > div`, this.TouchUp.bind(this))
     }
     click(x, y) {
         if (x > this.container_size) {
@@ -46,8 +46,8 @@ class Joy {
         else if (y < 0) {
             y = 0
         }
-        this.joy.css("left", x - this.joy_center)
-        this.joy.css("top", y - this.joy_center)
+        this.joy.css('left', x - this.joy_center)
+        this.joy.css('top', y - this.joy_center)
         this.pos.X = Math.round(-(x / this.container_size * 200 - 100))
         this.pos.Y = Math.round(-(y / this.container_size * 200 - 100))
     }
@@ -62,8 +62,8 @@ class Joy {
     }
     MouseUp(e) {
         this.clicked = false
-        this.joy.css("left", this.joy_default_pos)
-        this.joy.css("top", this.joy_default_pos)
+        this.joy.css('left', this.joy_default_pos)
+        this.joy.css('top', this.joy_default_pos)
         this.pos.X = 0
         this.pos.Y = 0
     }
@@ -78,8 +78,8 @@ class Joy {
     }
     TouchUp(e) {
         this.clicked = false
-        this.joy.css("left", this.joy_default_pos)
-        this.joy.css("top", this.joy_default_pos)
+        this.joy.css('left', this.joy_default_pos)
+        this.joy.css('top', this.joy_default_pos)
         this.pos.X = 0
         this.pos.Y = 0
     }
@@ -92,8 +92,8 @@ class Joy {
         this.joy_center = this.container_size * 0.45
         this.joy.width(this.joy_default_size)
         this.joy.height(this.joy_default_size)
-        this.joy.css("left", this.joy_default_pos)
-        this.joy.css("top", this.joy_default_pos)
+        this.joy.css('left', this.joy_default_pos)
+        this.joy.css('top', this.joy_default_pos)
     }
     GetPos() {
         return this.pos

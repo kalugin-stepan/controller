@@ -1,7 +1,7 @@
 function getCookie(cname) {
-    const name = cname + "="
+    const name = cname + '='
     const decodedCookie = decodeURIComponent(document.cookie)
-    const ca = decodedCookie.split(';')
+    const ca = decodedCookie.split('')
     for (let i = 0; i < ca.length; i++) {
         let c = ca[i]
         while (c.charAt(0) == ' ') {
@@ -15,45 +15,45 @@ function getCookie(cname) {
 }
 
 function fallbackCopyTextToClipboard(text) {
-    var textArea = document.createElement("textarea");
-    textArea.value = text;
+    var textArea = document.createElement('textarea')
+    textArea.value = text
     
     // Avoid scrolling to bottom
-    textArea.style.top = "0";
-    textArea.style.left = "0";
-    textArea.style.position = "fixed";
+    textArea.style.top = '0'
+    textArea.style.left = '0'
+    textArea.style.position = 'fixed'
   
-    document.body.appendChild(textArea);
-    textArea.focus();
-    textArea.select();
+    document.body.appendChild(textArea)
+    textArea.focus()
+    textArea.select()
   
     try {
-      var successful = document.execCommand('copy');
-      var msg = successful ? 'successful' : 'unsuccessful';
-      console.log('Fallback: Copying text command was ' + msg);
+      var successful = document.execCommand('copy')
+      var msg = successful ? 'successful' : 'unsuccessful'
+      console.log('Fallback: Copying text command was ' + msg)
     } catch (err) {
-      console.error('Fallback: Oops, unable to copy', err);
+      console.error('Fallback: Oops, unable to copy', err)
     }
   
-    document.body.removeChild(textArea);
+    document.body.removeChild(textArea)
   }
   function copyTextToClipboard(text) {
     if (!navigator.clipboard) {
-      fallbackCopyTextToClipboard(text);
-      return;
+      fallbackCopyTextToClipboard(text)
+      return
     }
     navigator.clipboard.writeText(text).then(function() {
-      console.log('Async: Copying to clipboard was successful!');
+      console.log('Async: Copying to clipboard was successful!')
     }, function(err) {
-      console.error('Async: Could not copy text: ', err);
-    });
+      console.error('Async: Could not copy text: ', err)
+    })
   }
 
 function personalData() {
     const main = $('.profile')
     main.html('')
     const uid = getCookie('uid')
-    const input = $(`<input value="${uid}" style="font-weight: bold" readonly/>`)
+    const input = $(`<input value='${uid}' style='font-weight: bold' readonly/>`)
     input.on('mouseover', () => {
         input.css('cursor', 'pointer')
     })
@@ -82,6 +82,6 @@ function download() {
 }
 $(() => {
     personalData()
-    $('button[name="data"]').click(personalData)
-    $('button[name="config"]').click(config)
+    $('button[name="data"]').on('click', personalData)
+    $('button[name="config"]').on('click', config)
 })

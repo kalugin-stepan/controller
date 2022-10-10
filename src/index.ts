@@ -250,8 +250,8 @@ app.post('/change_password/:code', async (req, res) => {
     res.redirect('/login')
 })
 
-app.get('/active/:code', (req, res) => {
-    database.active(req.params.code, uuid())
+app.get('/active/:code', async (req, res) => {
+    await database.active(req.params.code, uuid())
     res.redirect('/login')
 })
 

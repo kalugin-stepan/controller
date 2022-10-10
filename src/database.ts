@@ -1,4 +1,4 @@
-import sqlite from "sqlite3"
+import sqlite from 'sqlite3'
 
 type bool = 1 | 0
 
@@ -18,7 +18,7 @@ class DataBase {
 
     constructor(db_path: string) {
         this.db = new sqlite.Database(db_path)
-        this.exec("create table if not exists users (id integer primary key autoincrement unique, login varchar(30), email varchar(30), password varchar(32), uid varchar(36), active tinyint(1), code varchar(36))")
+        this.exec('create table if not exists users (id integer primary key autoincrement unique, login varchar(30), email varchar(30), password varchar(32), uid varchar(36), active tinyint(1), code varchar(36))')
     }
 
     private async exec(cmd: string): Promise<void> {
@@ -103,7 +103,7 @@ class DataBase {
     }
 
     async getUsers(): Promise<Array<User>> {
-        return await this.select("select * from users")
+        return await this.select('select * from users')
     }
 
     async active(code : string, new_code : string): Promise<void> {
