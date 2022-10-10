@@ -19,6 +19,7 @@
     <%- include("./blocks/header.ejs") %>
     <h2 name="con" class="h2 disconnected mb-30">Disconnected</h2>
     <div class="container mb-30">
+        <img width="500px" id="stream" style="margin: auto; display: block"/>
         <div id="joy"></div>
     </div>
     <div style="display: none;" name="box"></div>
@@ -29,14 +30,14 @@
         const joy = $('#joy')
         function update_size() {
             if (window.innerWidth > window.innerHeight) {
-                joy.height(window.innerHeight / 2)
+                joy.height(window.innerHeight / 4)
             }
             else {
-                joy.height(window.innerWidth / 2)
+                joy.height(window.innerWidth / 4)
             }
         }
         update_size()
-        const app = new App('#joy', mqtt_url)
+        const app = new App('#joy', mqtt_url, document.getElementById('stream'))
         app.on_connect(() => {
             con.text('Connected')
             con.addClass('connected')

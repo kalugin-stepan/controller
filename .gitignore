@@ -1,7 +1,5 @@
 /node_modules
-/static/.sass-cache
 /.vscode
 db.sqlite
-package-lock.json
 yarn.lock
-client.js
+client.py

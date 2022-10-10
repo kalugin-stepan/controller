@@ -18,9 +18,9 @@ const config = JSON.parse(fs.readFileSync(path.join(root, 'config.json'), 'utf-8
 
 const database = new DataBase('db.sqlite')
 
-const web_api = config.api_url !== null ? new WebApi(config.api_url) : null
+const web_api: WebApi | null = config.api_url !== null ? new WebApi(config.api_url) : null
 
-const sender = new Sender(config.email, config.password)
+const sender: Sender | null = config.email !== null ? new Sender(config.email, config.password) : null
 
 const templ = fs.readFileSync(path.join(root, 'template.ino'), 'utf-8')
 
@@ -68,7 +68,12 @@ async function register(username: string, email: string, password: string): Prom
             const is_registered_in_web_api = web_api !== null ? await web_api.register(username, password) : true
             if (!is_registered_in_web_api) return false
             await database.addUsr(username, password_md5, email, uid, code)
-            await database.active(code, uuid())
+            if (sender === null) {
+                await database.active(code, uuid())
+            }
+            else {
+                sender.send(email, 'activate', `http://${config.host}:${config.port}/active/${code}`)
+            }
             return true
         }
         return false
@@ -191,10 +196,18 @@ app.post('/register', async (req, res) => {
 })
 
 app.get('/forgot_password', (req, res) => {
+    if (sender === null) {
+        res.send('Эта функция недоступна в локальном режиме')
+        return
+    }
     res.render('forgot_password.ejs')
 })
 
 app.post('/forgot_password', async (req, res) => {
+    if (sender === null) {
+        res.send('Эта функция недоступна в локальном режиме')
+        return
+    }
     const login : string = req.body.login.toLowerCase()
     const email : string = req.body.email.toLowerCase()
     if (login && email) {

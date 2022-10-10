@@ -21,11 +21,12 @@ class App {
     on_connection_event_handler = null
     on_disconnection_event_handler = null
 
-    constructor(selector, mqtt_url) {
+    constructor(joy_selector, mqtt_url, img=undefined) {
         this.lastpos = ''
         this.mqtt_conn = mqtt.connect(mqtt_url)
         this.uid = GetCookie('uid')
-        this.joy = new Joy(selector)
+        this.joy = new Joy(joy_selector)
+        this.img = img
         this.events()
     }
 
@@ -39,13 +40,19 @@ class App {
 
     events() {
         this.mqtt_conn.subscribe(this.uid + ':con')
+        if (this.img !== undefined) this.mqtt_conn.subscribe(this.uid + ':img')
 
         this.mqtt_conn.on('message', (topic, payload) => {
-            this.pinged = true
-            if (!this.connected) {
-                this.connected = true
-                if (this.on_connection_event_handler !== null) this.on_connection_event_handler()
+            if (topic === this.uid + ':con') {
+                this.pinged = true
+                if (!this.connected) {
+                    this.connected = true
+                    if (this.on_connection_event_handler !== null) this.on_connection_event_handler()
+                }
+                return
             }
+            const data = payload.toString('base64')
+            this.img.src = `data:image/jpg;base64,${data}`
         })
 
         setInterval(() => {
