@@ -15,18 +15,18 @@ function GetCookie(cname) {
 }
 
 class App {
+    data = new Uint8Array(2)
+    
     connected = false
     pinged = false
 
     on_connection_event_handler = null
     on_disconnection_event_handler = null
 
-    constructor(joy_selector, mqtt_url, img=undefined) {
-        this.lastpos = ''
+    constructor(joy_selector, mqtt_url) {
         this.mqtt_conn = mqtt.connect(mqtt_url)
         this.uid = GetCookie('uid')
         this.joy = new Joy(joy_selector)
-        this.img = img
         this.events()
     }
 
@@ -40,19 +40,14 @@ class App {
 
     events() {
         this.mqtt_conn.subscribe(this.uid + ':con')
-        if (this.img !== undefined) this.mqtt_conn.subscribe(this.uid + ':img')
 
         this.mqtt_conn.on('message', (topic, payload) => {
-            if (topic === this.uid + ':con') {
-                this.pinged = true
-                if (!this.connected) {
-                    this.connected = true
-                    if (this.on_connection_event_handler !== null) this.on_connection_event_handler()
-                }
-                return
+            console.log('ping')
+            this.pinged = true
+            if (!this.connected) {
+                this.connected = true
+                if (this.on_connection_event_handler !== null) this.on_connection_event_handler()
             }
-            const data = payload.toString('base64')
-            this.img.src = `data:image/jpg;base64,${data}`
         })
 
         setInterval(() => {
@@ -67,7 +62,8 @@ class App {
 
     SendPos() {
         if (!this.connected) return
-        const pos = JSON.stringify(this.joy.GetPos())
-        this.mqtt_conn.publish(this.uid + ':pos', pos)
+        this.data[0] = this.joy.X
+        this.data[1] = this.joy.Y
+        this.mqtt_conn.publish(this.uid + ':pos', this.data)
     }
 }

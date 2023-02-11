@@ -8,7 +8,7 @@ class Sender {
     constructor(email, password) {
         this.email = email;
         this.sender = (0, nodemailer_1.createTransport)({
-            service: "gmail",
+            service: 'gmail',
             auth: {
                 user: email,
                 pass: password

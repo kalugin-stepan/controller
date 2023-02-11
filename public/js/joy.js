@@ -1,7 +1,8 @@
 class Joy {
+    X = 0
+    Y = 0
     constructor(selector) {
         this.clicked = false
-        this.pos = { X: 0, Y: 0 }
         this.parent = $(selector)
         this.container = $('<div></div>')
         this.container.css('border', '1px black solid')
@@ -48,8 +49,8 @@ class Joy {
         }
         this.joy.css('left', x - this.joy_center)
         this.joy.css('top', y - this.joy_center)
-        this.pos.X = Math.round(-(x / this.container_size * 200 - 100))
-        this.pos.Y = Math.round(-(y / this.container_size * 200 - 100))
+        this.X = Math.round(-(x / this.container_size * 200 - 100))
+        this.Y = Math.round(-(y / this.container_size * 200 - 100))
     }
     MouseDown(e) {
         this.clicked = true
@@ -64,8 +65,8 @@ class Joy {
         this.clicked = false
         this.joy.css('left', this.joy_default_pos)
         this.joy.css('top', this.joy_default_pos)
-        this.pos.X = 0
-        this.pos.Y = 0
+        this.X = 0
+        this.Y = 0
     }
     TouchDown(e) {
         this.clicked = true
@@ -80,8 +81,8 @@ class Joy {
         this.clicked = false
         this.joy.css('left', this.joy_default_pos)
         this.joy.css('top', this.joy_default_pos)
-        this.pos.X = 0
-        this.pos.Y = 0
+        this.X = 0
+        this.Y = 0
     }
     Resize() {
         this.container_size = this.parent.height()
@@ -94,8 +95,5 @@ class Joy {
         this.joy.height(this.joy_default_size)
         this.joy.css('left', this.joy_default_pos)
         this.joy.css('top', this.joy_default_pos)
-    }
-    GetPos() {
-        return this.pos
     }
 }

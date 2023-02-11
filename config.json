@@ -3,7 +3,7 @@
     "port": 80,
     "email": null,
     "password": null,
-    "mqtt_host": "broker.emqx.io",
-    "mqtt_port": 8083,
+    "mqtt_host": "broker.mqttdashboard.com",
+    "mqtt_port": 8000,
     "api_url": null
 }

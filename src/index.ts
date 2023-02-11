@@ -1,4 +1,4 @@
-import express, {Request, Response} from 'express'
+import express, { Request, Response } from 'express'
 const app = express()
 import fs from 'fs'
 import path from 'path'
@@ -7,10 +7,12 @@ import { createServer } from 'http'
 const server = createServer(app)
 import md5 from 'md5'
 import cookieParser from 'cookie-parser'
-const { v4 : uuid } = require('uuid')
-import {DataBase, User} from './database'
+import { v4 } from 'uuid'
+import { DataBase, User } from './database'
 import WebApi from './web_api'
 import { Sender } from './sender'
+
+const uuid = v4
 
 const root : string = path.dirname(__dirname)
 
@@ -60,6 +62,7 @@ async function is_loged_in(req: Request): Promise<boolean> {
 }
 
 async function register(username: string, email: string, password: string): Promise<boolean> {
+    username = username.toLocaleLowerCase()
     if (is_password_valid(password)) {
         const password_md5 : string = md5(password).toString()
         const code : string = uuid()
@@ -82,6 +85,7 @@ async function register(username: string, email: string, password: string): Prom
 }
 
 async function login(username: string, password: string, res: Response): Promise<boolean | string> {
+    username = username.toLowerCase()
     if (is_password_valid(password)) {
         const password_md5 : string = md5(password).toString()
         const user : User | null = await database.getUserByLogin(username)
@@ -138,12 +142,10 @@ app.get('/login', async (req, res) => {
         &&
         typeof password === 'string'
     ) {
-        const rez = await login(username, password, res)
-        if (typeof rez === 'string') {
-            
+        if (!(await login(username, password, res))) {
+            res.redirect('/')
+            return
         }
-        res.redirect('/')
-        return    
     }
     res.render('login.ejs')
 })

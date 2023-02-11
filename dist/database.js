@@ -9,7 +9,7 @@ class DataBase {
     db;
     constructor(db_path) {
         this.db = new sqlite3_1.default.Database(db_path);
-        this.exec("create table if not exists users (id integer primary key autoincrement unique, login varchar(30), email varchar(30), password varchar(32), uid varchar(36), active tinyint(1), code varchar(36))");
+        this.exec('create table if not exists users (id integer primary key autoincrement unique, login varchar(30), email varchar(30), password varchar(32), uid varchar(36), active tinyint(1), code varchar(36))');
     }
     async exec(cmd) {
         return new Promise((res, rej) => {
@@ -84,7 +84,7 @@ class DataBase {
         return null;
     }
     async getUsers() {
-        return await this.select("select * from users");
+        return await this.select('select * from users');
     }
     async active(code, new_code) {
         await this.exec(`update users set active=1, code="${new_code}" where code="${code}"`);

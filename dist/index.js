@@ -12,15 +12,16 @@ const http_1 = require("http");
 const server = (0, http_1.createServer)(app);
 const md5_1 = __importDefault(require("md5"));
 const cookie_parser_1 = __importDefault(require("cookie-parser"));
-const { v4: uuid } = require('uuid');
+const uuid_1 = require("uuid");
 const database_1 = require("./database");
 const web_api_1 = __importDefault(require("./web_api"));
 const sender_1 = require("./sender");
+const uuid = uuid_1.v4;
 const root = path_1.default.dirname(__dirname);
 const config = JSON.parse(fs_1.default.readFileSync(path_1.default.join(root, 'config.json'), 'utf-8'));
 const database = new database_1.DataBase('db.sqlite');
 const web_api = config.api_url !== null ? new web_api_1.default(config.api_url) : null;
-const sender = new sender_1.Sender(config.email, config.password);
+const sender = config.email !== null ? new sender_1.Sender(config.email, config.password) : null;
 const templ = fs_1.default.readFileSync(path_1.default.join(root, 'template.ino'), 'utf-8');
 function get_zip(uid, ssid, password) {
     const zip = new adm_zip_1.default();
@@ -52,6 +53,7 @@ async function is_loged_in(req) {
     return false;
 }
 async function register(username, email, password) {
+    username = username.toLocaleLowerCase();
     if (is_password_valid(password)) {
         const password_md5 = (0, md5_1.default)(password).toString();
         const code = uuid();
@@ -60,8 +62,13 @@ async function register(username, email, password) {
             const is_registered_in_web_api = web_api !== null ? await web_api.register(username, password) : true;
             if (!is_registered_in_web_api)
                 return false;
-            sender.send(email, 'Active', 'http://' + config.host + ':' + config.port + '/active/' + code);
-            database.addUsr(username, password_md5, email, uid, code);
+            await database.addUsr(username, password_md5, email, uid, code);
+            if (sender === null) {
+                await database.active(code, uuid());
+            }
+            else {
+                sender.send(email, 'activate', `http://${config.host}:${config.port}/active/${code}`);
+            }
             return true;
         }
         return false;
@@ -69,6 +76,7 @@ async function register(username, email, password) {
     return false;
 }
 async function login(username, password, res) {
+    username = username.toLowerCase();
     if (is_password_valid(password)) {
         const password_md5 = (0, md5_1.default)(password).toString();
         const user = await database.getUserByLogin(username);
@@ -80,11 +88,13 @@ async function login(username, password, res) {
                         return false;
                     res.cookie('id', user.id);
                     res.cookie('password', password_md5);
+                    res.cookie('uid', user.uid);
                     res.cookie('token', token);
                     return token;
                 }
                 res.cookie('id', user.id);
                 res.cookie('password', password_md5);
+                res.cookie('uid', user.uid);
                 return true;
             }
         }
@@ -118,18 +128,17 @@ app.get('/login', async (req, res) => {
     if (typeof username === 'string'
         &&
             typeof password === 'string') {
-        const rez = await login(username, password, res);
-        if (typeof rez === 'string') {
+        if (!(await login(username, password, res))) {
+            res.redirect('/');
+            return;
         }
-        res.redirect('/');
-        return;
     }
     res.render('login.ejs');
 });
 app.post('/login', async (req, res) => {
     const username = req.body.username;
     const password = req.body.password;
-    if (typeof login === 'string'
+    if (typeof username === 'string'
         &&
             typeof password === 'string'
         &&
@@ -143,6 +152,7 @@ app.get('/logout', (req, res) => {
     res.clearCookie('id');
     res.clearCookie('password');
     res.clearCookie('uid');
+    res.clearCookie('token');
     res.redirect('/login');
 });
 app.get('/register', (req, res) => {
@@ -151,7 +161,7 @@ app.get('/register', (req, res) => {
 app.post('/register', async (req, res) => {
     const username = req.body.username;
     const email = req.body.email;
-    const password = req.body.passowrd;
+    const password = req.body.password;
     if (typeof username === 'string'
         &&
             typeof email === 'string'
@@ -159,16 +169,23 @@ app.post('/register', async (req, res) => {
             typeof password === 'string'
         &&
             await register(username, email, password)) {
-        res.send('На вашу почту пришло сообщение с активацией аккаунта.');
         res.redirect('/login');
         return;
     }
     res.send('<a href="/register">login или email уже существует</a>');
 });
 app.get('/forgot_password', (req, res) => {
+    if (sender === null) {
+        res.send('Эта функция недоступна в локальном режиме');
+        return;
+    }
     res.render('forgot_password.ejs');
 });
 app.post('/forgot_password', async (req, res) => {
+    if (sender === null) {
+        res.send('Эта функция недоступна в локальном режиме');
+        return;
+    }
     const login = req.body.login.toLowerCase();
     const email = req.body.email.toLowerCase();
     if (login && email) {
@@ -208,8 +225,8 @@ app.post('/change_password/:code', async (req, res) => {
     }
     res.redirect('/login');
 });
-app.get('/active/:code', (req, res) => {
-    database.active(req.params.code, uuid());
+app.get('/active/:code', async (req, res) => {
+    await database.active(req.params.code, uuid());
     res.redirect('/login');
 });
 server.listen(config.port);
