@@ -28,11 +28,13 @@ const templ = fs.readFileSync(path.join(root, 'template.ino'), 'utf-8')
 
 function get_zip(uid: string, ssid: string, password: string): Buffer {
     const zip = new AdmZip();
-    const data = Buffer.from(templ.replace('{wifi}', ssid)
-    .replace('{password}', password)
-    .replaceAll('{uid}', uid)
-    .replace('{host}', config.mqtt_host)
-    .replace('{port}', config.mqtt_port))
+    const data = Buffer.from(templ
+        .replace('{wifi}', ssid)
+        .replace('{password}', password)
+        .replaceAll('{uid}', uid)
+        .replace('{host}', config.mqtt_host)
+        .replace('{port}', config.mqtt_port)
+    )
     zip.addFile('script/script.ino', data)
     return zip.toBuffer()
 }
