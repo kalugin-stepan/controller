@@ -69,7 +69,7 @@ async function register(username, email, password) {
                 await database.active(code, uuid());
             }
             else {
-                sender.send(email, 'activate', `http://${config.host}:${config.port}/active/${code}`);
+                sender.send(email, 'activate', config.port === 80 ? `http://${config.host}/active/${code}` : `http://${config.host}:${config.port}/active/${code}`);
             }
             return true;
         }
