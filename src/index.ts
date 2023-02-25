@@ -118,7 +118,7 @@ async function login(username: string, password: string, res: Response): Promise
 
 app.get('/', async (req, res) => {
     if (await is_loged_in(req)) {
-        res.render('index.ejs', {mqtt_url: `ws://${config.mqtt_host}:${config.mqtt_port}/mqtt`})
+        res.render('index.ejs', {mqtt_url: `ws://${config.mqtt_host}:${config.mqtt_port}/mqtt`, cam_server_url: config.cam_server_url})
         return
     }
     res.redirect('/login')

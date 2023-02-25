@@ -20,5 +20,6 @@
         "password": null,
         "database": "drone",
         "port": 3306
-    }
+    },
+    "cam_server_url": "http://localhost:5000"
 }

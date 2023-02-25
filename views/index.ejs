@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="/public/css/style.css">
     <script>
         const mqtt_url = '<%= mqtt_url %>'
+        const cam_server_url = '<%= cam_server_url %>'
     </script>
     <script src="/node_modules/jquery/dist/jquery.min.js"></script>
     <script src="/public/js/joy.js"></script>
@@ -18,6 +19,9 @@
 <body>
     <%- include("./blocks/header.ejs") %>
     <h2 name="con" class="h2 disconnected mb-30">Disconnected</h2>
+    <div style="text-align: center; margin-bottom: 20px;">
+        <img id="video" style="max-height: 50vh; display: none;">
+    </div>
     <div class="container mb-30">
         <div id="joy"></div>
     </div>
@@ -25,14 +29,20 @@
     <%- include("./blocks/footer.ejs") %>
     <script>
         const con = $('h2[name="con"]')
+        const video = $('#video')
+
+        if (cam_server_url !== '') {
+            video.attr('src', cam_server_url + '/' + GetCookie('uid'))
+            video.css('display', 'inline')
+        }
 
         const joy = $('#joy')
         function update_size() {
             if (window.innerWidth > window.innerHeight) {
-                joy.height(window.innerHeight / 2)
+                joy.height(window.innerHeight / 4)
             }
             else {
-                joy.height(window.innerWidth / 2)
+                joy.height(window.innerWidth / 4)
             }
         }
         update_size()
