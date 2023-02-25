@@ -1,9 +1,24 @@
 {
     "host": "localhost",
     "port": 80,
-    "email": null,
-    "password": null,
+    "email_sender": {
+        "host": "smtp.mail.ru",
+        "port": 465,
+        "secure": true,
+        "auth": {
+            "user": null,
+            "pass": null
+        },
+        "from": null
+    },
     "mqtt_host": "broker.mqttdashboard.com",
     "mqtt_port": 8000,
-    "api_url": null
+    "api_url": null,
+    "mysql": {
+        "host": null,
+        "user": null,
+        "password": null,
+        "database": "drone",
+        "port": 3306
+    }
 }

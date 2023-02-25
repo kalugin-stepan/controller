@@ -4,28 +4,30 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
-const app = (0, express_1.default)();
 const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
 const adm_zip_1 = __importDefault(require("adm-zip"));
 const http_1 = require("http");
-const server = (0, http_1.createServer)(app);
 const md5_1 = __importDefault(require("md5"));
 const cookie_parser_1 = __importDefault(require("cookie-parser"));
 const uuid_1 = require("uuid");
-const database_1 = require("./database");
+const sqlite_database_1 = require("./sqlite_database");
+const mysql_database_1 = __importDefault(require("./mysql_database"));
 const web_api_1 = __importDefault(require("./web_api"));
 const sender_1 = require("./sender");
+const app = (0, express_1.default)();
+const server = (0, http_1.createServer)(app);
 const uuid = uuid_1.v4;
 const root = path_1.default.dirname(__dirname);
 const config = JSON.parse(fs_1.default.readFileSync(path_1.default.join(root, 'config.json'), 'utf-8'));
-const database = new database_1.DataBase('db.sqlite');
+const database = config.mysql.host !== null ? new mysql_database_1.default(config.mysql) : new sqlite_database_1.SQLite_DataBase('db.sqlite');
 const web_api = config.api_url !== null ? new web_api_1.default(config.api_url) : null;
-const sender = config.email !== null ? new sender_1.Sender(config.email, config.password) : null;
+const sender = config.email_sender.auth.user !== null ? new sender_1.Sender(config.email_sender) : null;
 const templ = fs_1.default.readFileSync(path_1.default.join(root, 'template.ino'), 'utf-8');
 function get_zip(uid, ssid, password) {
     const zip = new adm_zip_1.default();
-    const data = Buffer.from(templ.replace('{wifi}', ssid)
+    const data = Buffer.from(templ
+        .replace('{wifi}', ssid)
         .replace('{password}', password)
         .replaceAll('{uid}', uid)
         .replace('{host}', config.mqtt_host)
@@ -45,7 +47,7 @@ async function is_loged_in(req) {
     const password = req.cookies.password;
     const uid = req.cookies.uid;
     if (id && password && uid) {
-        const user = await database.getUserByID(id);
+        const user = await database.get_user_by_ID(id);
         if (user !== null) {
             return user.password === password && user.uid === uid && user.active === 1;
         }
@@ -58,11 +60,11 @@ async function register(username, email, password) {
         const password_md5 = (0, md5_1.default)(password).toString();
         const code = uuid();
         const uid = uuid();
-        if (!await database.emailExists(email) && !await database.loginExists(username)) {
+        if (!await database.email_exists(email) && !await database.login_exists(username)) {
             const is_registered_in_web_api = web_api !== null ? await web_api.register(username, password) : true;
             if (!is_registered_in_web_api)
                 return false;
-            await database.addUsr(username, password_md5, email, uid, code);
+            await database.add_usr(username, password_md5, email, uid, code);
             if (sender === null) {
                 await database.active(code, uuid());
             }
@@ -79,7 +81,7 @@ async function login(username, password, res) {
     username = username.toLowerCase();
     if (is_password_valid(password)) {
         const password_md5 = (0, md5_1.default)(password).toString();
-        const user = await database.getUserByLogin(username);
+        const user = await database.get_user_by_login(username);
         if (user !== null) {
             if (user.password === password_md5 && user.active === 1) {
                 if (web_api !== null) {
@@ -189,11 +191,11 @@ app.post('/forgot_password', async (req, res) => {
     const login = req.body.login.toLowerCase();
     const email = req.body.email.toLowerCase();
     if (login && email) {
-        const user = await database.getUserByLogin(login);
+        const user = await database.get_user_by_login(login);
         if (user !== null) {
             if (user.email === email) {
                 const code = uuid();
-                database.changeCodeById(user.id, code);
+                database.change_code_by_ID(user.id, code);
                 sender.send(email, 'Смена пароля', 'http://' + config.host + ':' + config.port + '/change_password/' + code);
                 res.send('На вашу почту отправлена ссылка со сменой пароля');
             }
@@ -207,7 +209,7 @@ app.post('/forgot_password', async (req, res) => {
     }
 });
 app.get('/change_password/:code', async (req, res) => {
-    const code_ex = await database.codeExists(req.params.code);
+    const code_ex = await database.code_exists(req.params.code);
     if (code_ex) {
         res.render('change_password.ejs');
         return;
@@ -217,9 +219,9 @@ app.get('/change_password/:code', async (req, res) => {
 app.post('/change_password/:code', async (req, res) => {
     const password_md5 = (0, md5_1.default)(req.body.password).toString();
     const code = req.params.code;
-    const code_ex = await database.codeExists(code);
+    const code_ex = await database.code_exists(code);
     if (code_ex) {
-        database.changePasswordByCode(password_md5, code, uuid());
+        database.change_password_by_code(password_md5, code, uuid());
         res.send('<a href="/login">Пароль сменён</a>');
         return;
     }

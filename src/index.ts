@@ -1,16 +1,20 @@
 import express, { Request, Response } from 'express'
-const app = express()
 import fs from 'fs'
 import path from 'path'
 import AdmZip from 'adm-zip'
 import { createServer } from 'http'
-const server = createServer(app)
 import md5 from 'md5'
 import cookieParser from 'cookie-parser'
 import { v4 } from 'uuid'
-import { DataBase, User } from './database'
+import IDataBase, { User } from './database'
+import { SQLite_DataBase } from './sqlite_database'
+import MySQL_DataBase from './mysql_database'
 import WebApi from './web_api'
 import { Sender } from './sender'
+
+
+const app = express()
+const server = createServer(app)
 
 const uuid = v4
 
@@ -18,16 +22,16 @@ const root : string = path.dirname(__dirname)
 
 const config = JSON.parse(fs.readFileSync(path.join(root, 'config.json'), 'utf-8'))
 
-const database = new DataBase('db.sqlite')
+const database: IDataBase = config.mysql.host !== null ? new MySQL_DataBase(config.mysql) : new SQLite_DataBase('db.sqlite')
 
 const web_api: WebApi | null = config.api_url !== null ? new WebApi(config.api_url) : null
 
-const sender: Sender | null = config.email !== null ? new Sender(config.email, config.password) : null
+const sender: Sender | null = config.email_sender.auth.user !== null ? new Sender(config.email_sender) : null
 
 const templ = fs.readFileSync(path.join(root, 'template.ino'), 'utf-8')
 
 function get_zip(uid: string, ssid: string, password: string): Buffer {
-    const zip = new AdmZip();
+    const zip = new AdmZip()
     const data = Buffer.from(templ
         .replace('{wifi}', ssid)
         .replace('{password}', password)
@@ -55,7 +59,7 @@ async function is_loged_in(req: Request): Promise<boolean> {
     const password : string = req.cookies.password
     const uid : string = req.cookies.uid
     if (id && password && uid) {
-        const user = await database.getUserByID(id)
+        const user = await database.get_user_by_ID(id)
         if (user !== null) {
             return user.password === password && user.uid === uid && user.active === 1
         }
@@ -69,10 +73,10 @@ async function register(username: string, email: string, password: string): Prom
         const password_md5 : string = md5(password).toString()
         const code : string = uuid()
         const uid : string = uuid()
-        if (!await database.emailExists(email) && !await database.loginExists(username)) {
+        if (!await database.email_exists(email) && !await database.login_exists(username)) {
             const is_registered_in_web_api = web_api !== null ? await web_api.register(username, password) : true
             if (!is_registered_in_web_api) return false
-            await database.addUsr(username, password_md5, email, uid, code)
+            await database.add_usr(username, password_md5, email, uid, code)
             if (sender === null) {
                 await database.active(code, uuid())
             }
@@ -90,7 +94,7 @@ async function login(username: string, password: string, res: Response): Promise
     username = username.toLowerCase()
     if (is_password_valid(password)) {
         const password_md5 : string = md5(password).toString()
-        const user : User | null = await database.getUserByLogin(username)
+        const user : User | null = await database.get_user_by_login(username)
         if (user !== null) {
             if (user.password === password_md5 && user.active === 1) {
                 if (web_api !== null) {
@@ -215,11 +219,11 @@ app.post('/forgot_password', async (req, res) => {
     const login : string = req.body.login.toLowerCase()
     const email : string = req.body.email.toLowerCase()
     if (login && email) {
-        const user : User | null = await database.getUserByLogin(login)
+        const user : User | null = await database.get_user_by_login(login)
         if (user !== null) {
             if (user.email === email) {
                 const code = uuid()
-                database.changeCodeById(user.id, code)
+                database.change_code_by_ID(user.id, code)
                 sender.send(email, 'Смена пароля', 'http://' + config.host + ':' + config.port + '/change_password/' + code)
                 res.send('На вашу почту отправлена ссылка со сменой пароля')
             }
@@ -234,7 +238,7 @@ app.post('/forgot_password', async (req, res) => {
 })
 
 app.get('/change_password/:code', async (req, res) => {
-    const code_ex : boolean = await database.codeExists(req.params.code)
+    const code_ex : boolean = await database.code_exists(req.params.code)
     if (code_ex) {
         res.render('change_password.ejs')
         return
@@ -245,9 +249,9 @@ app.get('/change_password/:code', async (req, res) => {
 app.post('/change_password/:code', async (req, res) => {
     const password_md5 : string = md5(req.body.password).toString()
     const code : string = req.params.code
-    const code_ex : boolean = await database.codeExists(code)
+    const code_ex : boolean = await database.code_exists(code)
     if (code_ex) {
-        database.changePasswordByCode(password_md5, code, uuid())
+        database.change_password_by_code(password_md5, code, uuid())
         res.send('<a href="/login">Пароль сменён</a>')
         return
     }

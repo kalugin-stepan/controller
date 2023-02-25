@@ -1,24 +1,18 @@
 import {createTransport, Transporter, SentMessageInfo} from 'nodemailer'
+import SMTPTransport from 'nodemailer/lib/smtp-transport'
 
 export class Sender {
-    email : string
     sender : Transporter<SentMessageInfo>
-    constructor(email : string, password : string) {
-        this.email = email
-        this.sender = createTransport({
-            service : 'gmail',
-            auth : {
-                user : email,
-                pass : password
-            }
-        })
+    constructor(options: SMTPTransport.Options) {
+        this.sender = createTransport(options, {from: options.from})
     }
     send(email : string, subject : string, text : string) : void {
         this.sender.sendMail({
-            from : this.email,
             to : email,
             subject : subject,
             text : text
         })
     }
 }
+
+export { SMTPTransport }
