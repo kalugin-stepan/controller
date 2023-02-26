@@ -1,1 +1,1 @@
-sass ./scss ./css
+sass ./scss/style.scss ./css/style.css

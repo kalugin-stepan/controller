@@ -6,12 +6,32 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Jsoystick</title>
     <link rel="stylesheet" href="/public/css/style.css">
+    <style>
+        #buttons {
+            width: 242.25px;
+            height: 242.25px;
+        }
+        #buttons button {
+            color: #f0f0f0;
+            background-color: #008000;
+            font-size: 36px;
+            width: 50px;
+            height: 50px;
+            user-select: none;
+        }
+        #buttons button:hover {
+            background-color: darkgreen;
+        }
+        .clicked {
+            transform: scale(0.9);
+        }
+    </style>
     <script>
         const mqtt_url = '<%= mqtt_url %>'
         const cam_server_url = '<%= cam_server_url %>'
     </script>
     <script src="/node_modules/jquery/dist/jquery.min.js"></script>
-    <script src="/public/js/joy.js"></script>
+    <!-- <script src="/public/js/joy.js"></script> -->
     <script src="/node_modules/mqtt/dist/mqtt.min.js"></script>
     <script src="/public/js/app.js"></script>
     <script src="/public/js/header.js"></script>
@@ -23,9 +43,27 @@
         <img id="video" style="max-height: 50vh; display: none;">
     </div>
     <div class="container mb-30">
-        <div id="joy"></div>
+        <div id="controls">
+            <div style="display: flex; flex-direction: row; width: min-content; margin: auto; padding-left: 65px;">
+                <div id="buttons" style="margin: auto; text-align: center; display: flex; justify-content: space-between; flex-direction: column;">
+                    <div>
+                        <button >F</button>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <button>L</button>
+                        <button>R</button>
+                    </div>
+                    <div>
+                        <button>B</button>
+                    </div>
+                </div>
+                <div style="display: flex; flex-direction: row; height: min-content; margin-top: 120px;">
+                    <input id="speed" type="range" min="1" max="10" value="10" style="transform: rotate(270deg); margin-top: 10%; margin-left: -40px;">
+                    <p id="speed_value" style="height: min-content; margin-left: -50px;">10</p>
+                </div>
+            </div>
+        </div>
     </div>
-    <div style="display: none;" name="box"></div>
     <%- include("./blocks/footer.ejs") %>
     <script>
         const con = $('h2[name="con"]')
@@ -36,17 +74,7 @@
             video.css('display', 'inline')
         }
 
-        const joy = $('#joy')
-        function update_size() {
-            if (window.innerWidth > window.innerHeight) {
-                joy.height(window.innerHeight / 4)
-            }
-            else {
-                joy.height(window.innerWidth / 4)
-            }
-        }
-        update_size()
-        const app = new App('#joy', mqtt_url)
+        const app = new App('#controls', mqtt_url)
         app.on_connect(() => {
             con.text('Connected')
             con.addClass('connected')
@@ -56,10 +84,6 @@
             con.text('Disconnected')
             con.addClass('disconnected')
             con.removeClass('connected')
-        })
-        addEventListener('resize', (e) => {
-            update_size()
-            app.joy.Resize()
         })
         setInterval(() => {
             app.SendPos()
