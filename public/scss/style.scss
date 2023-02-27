@@ -34,8 +34,17 @@ $secondory_color: white;
     margin-bottom: 30px;
 }
 
+.mb-20 {
+    margin-bottom: 20px;
+}
+
 .p-10 {
     padding: 10px;
+}
+
+.center-x {
+    margin: auto;
+    width: min-content;
 }
 
 .header {
@@ -128,10 +137,6 @@ $secondory_color: white;
 #joystick {
     border: 1px solid black;
 }
-#joy {
-    margin: 0 auto;
-    width: 50%;
-}
 
 input, button {
     padding: 5px;
@@ -156,14 +161,6 @@ input, button {
 .profile {
     flex: 1 0 auto;
     font-size: medium;
-}
-
-.videos {
-    display: flex;
-    flex-wrap: wrap;
-    &__video {
-        margin: 10px;
-    }
 }
 
 .form {

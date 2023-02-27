@@ -15,17 +15,23 @@ function GetCookie(cname) {
 }
 
 class App {
-    data = new Int16Array(2)
-    
     connected = false
     pinged = false
 
     on_connection_event_handler = null
     on_disconnection_event_handler = null
 
-    constructor(controls_selector, mqtt_url) {
+    directions = {
+        forward: false,
+        back: false,
+        left: false,
+        right: false
+    }
+
+    constructor(joy_selector, mqtt_url) {
         this.mqtt_conn = mqtt.connect(mqtt_url)
         this.uid = GetCookie('uid')
+        this.joy = new Joy(joy_selector)
         this.events()
     }
 
@@ -38,59 +44,29 @@ class App {
     }
 
     events() {
-        const btns = document.querySelectorAll('#buttons button')
-        const speed = document.getElementById('speed')
-        const speed_value = document.getElementById('speed_value')
-        btns.forEach(btn => {
-            const ondown = () => {
-                btn.classList.add('clicked')
-                if (btn.innerText === 'F') {
-                    this.data[1] += 100 * parseInt(speed.value)
-                    console.log(this.data)
-                    return
-                }
-                if (btn.innerText === 'B') {
-                    this.data[1] -= 100 * parseInt(speed.value)
-                    return
-                }
-                if (btn.innerText === 'L') {
-                    this.data[0] -= 100 * parseInt(speed.value)
-                    return
-                }
-                if (btn.innerText === 'R') {
-                    this.data[0] += 100 * parseInt(speed.value)
-                    return
-                }
-            }
-            btn.onmousedown = ondown
-            btn.ontouchstart = ondown
-            const onup = () => {
-                btn.classList.remove('clicked')
-                if (btn.innerText === 'F') {
-                    this.data[1] -= 100 * parseInt(speed.value)
-                    console.log(this.data)
-                    return
-                }
-                if (btn.innerText === 'B') {
-                    this.data[1] += 100 * parseInt(speed.value)
-                    return
-                }
-                if (btn.innerText === 'L') {
-                    this.data[0] += 100 * parseInt(speed.value)
-                    return
-                }
-                if (btn.innerText === 'R') {
-                    this.data[0] -= 100 * parseInt(speed.value)
-                    return
-                }
-            }
-            btn.onmouseup = onup
-            btn.ontouchend = onup
-            btn.ontouchcancel = onup
-        })
-        document.getElementById('speed').onchange = (e) => {
-            speed_value.innerText = e.target.value
+        const key_direction = {
+            KeyW: 'forward',
+            KeyS: 'back',
+            KeyA: 'left',
+            KeyD: 'right'
         }
+
+        const ondown = direction => {
+            this.directions[direction] = true
+        }
+
+        const onup = direction => {
+            this.directions[direction] = false
+        }
+        
+        document.addEventListener('keydown', e => {
+            if (key_direction[e.code] === undefined || e.repeat) return
+            ondown(key_direction[e.code])
+        })
+        document.addEventListener('keyup', e => {
+            if (key_direction[e.code] === undefined) return
+            onup(key_direction[e.code])
+        })
 
         this.mqtt_conn.subscribe(this.uid + ':con')
 
@@ -112,8 +88,90 @@ class App {
         }, 5000)
     }
 
-    SendPos() {
+    SendPos(k) {
         if (!this.connected) return
-        this.mqtt_conn.publish(this.uid + ':pos', new Uint8Array(this.data.buffer))
+
+        const data = new Int16Array(2)
+
+        if (
+            (this.directions.forward && this.directions.back)
+            ||
+            (!this.directions.forward && !this.directions.back)
+        ) {
+            if (this.directions.left && this.directions.right) {}
+            else if (this.directions.left) {
+                data[0] -= 100 * k
+                data[1] += 100 * k
+            }
+            else if (this.directions.right) {
+                data[0] += 100 * k
+                data[1] -= 100 * k
+            }
+        }
+
+        else if (this.directions.forward) {
+            data[0] += 100 * k
+            data[1] += 100 * k
+
+            if (this.directions.left && this.directions.right) {}
+            else if (this.directions.left) {
+                data[0] -= 50 * k
+            }
+            else if (this.directions.right) {
+                data[1] -= 50 * k
+            }
+        }
+
+        else if (this.directions.back) {
+            data[0] -= 100 * k
+            data[1] -= 100 * k
+
+            if (this.directions.left && this.directions.right) {}
+            else if (this.directions.left) {
+                data[0] += 50 * k
+            }
+            else if (this.directions.right) {
+                data[1] += 50 * k
+            }
+        }
+
+        if (data[0] === 0 && data[1] === 0) {
+            const pos = this.joy.GetPos()
+
+            if (pos.Y === 0) {
+                if (pos.X === -1) {
+                    data[0] -= 100 * k
+                    data[1] += 100 * k
+                }
+                else if (pos.X === 1) {
+                    data[0] += 100 * k
+                    data[1] -= 100 * k
+                }
+            }
+
+            else if (pos.Y === 1) {
+                data[0] += 100 * k
+                data[1] += 100 * k
+                if (pos.X === -1) {
+                    data[0] -= 50 * k
+                }
+                else if (pos.X === 1) {
+                    data[1] -= 50 * k
+                }
+            }
+
+            else if (pos.Y === -1) {
+                data[0] -= 100 * k
+                data[1] -= 100 * k
+                if (pos.X === -1) {
+                    data[0] += 50 * k
+                }
+                else if (pos.X === 1) {
+                    data[1] += 50 * k
+                }
+            }
+        }
+
+        this.mqtt_conn.publish(this.uid + ':pos', new Uint8Array(data.buffer))
     }
 }
