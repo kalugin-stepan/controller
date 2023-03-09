@@ -28,7 +28,7 @@ const web_api: WebApi | null = config.api_url !== null ? new WebApi(config.api_u
 
 const sender: Sender | null = config.email_sender.auth.user !== null ? new Sender(config.email_sender) : null
 
-const templ = fs.readFileSync(path.join(root, 'template.ino'), 'utf-8')
+const templ = fs.readFileSync(path.join(root, 'robot_template.ino'), 'utf-8')
 
 function get_zip(uid: string, ssid: string, password: string): Buffer {
     const zip = new AdmZip()
