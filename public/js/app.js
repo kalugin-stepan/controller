@@ -100,12 +100,12 @@ class App {
         ) {
             if (this.directions.left && this.directions.right) {}
             else if (this.directions.left) {
-                data[0] -= 100 * k
-                data[1] += 100 * k
-            }
-            else if (this.directions.right) {
                 data[0] += 100 * k
                 data[1] -= 100 * k
+            }
+            else if (this.directions.right) {
+                data[0] -= 100 * k
+                data[1] += 100 * k
             }
         }
 
@@ -115,10 +115,10 @@ class App {
 
             if (this.directions.left && this.directions.right) {}
             else if (this.directions.left) {
-                data[0] -= 50 * k
+                data[1] -= 50 * k
             }
             else if (this.directions.right) {
-                data[1] -= 50 * k
+                data[0] -= 50 * k
             }
         }
 
@@ -128,10 +128,10 @@ class App {
 
             if (this.directions.left && this.directions.right) {}
             else if (this.directions.left) {
-                data[0] += 50 * k
+                data[1] += 50 * k
             }
             else if (this.directions.right) {
-                data[1] += 50 * k
+                data[0] += 50 * k
             }
         }
 
@@ -140,12 +140,12 @@ class App {
 
             if (pos.Y === 0) {
                 if (pos.X === -1) {
-                    data[0] -= 100 * k
-                    data[1] += 100 * k
-                }
-                else if (pos.X === 1) {
                     data[0] += 100 * k
                     data[1] -= 100 * k
+                }
+                else if (pos.X === 1) {
+                    data[0] -= 100 * k
+                    data[1] += 100 * k
                 }
             }
 
@@ -153,10 +153,10 @@ class App {
                 data[0] += 100 * k
                 data[1] += 100 * k
                 if (pos.X === -1) {
-                    data[0] -= 50 * k
+                    data[1] -= 50 * k
                 }
                 else if (pos.X === 1) {
-                    data[1] -= 50 * k
+                    data[0] -= 50 * k
                 }
             }
 
@@ -164,10 +164,10 @@ class App {
                 data[0] -= 100 * k
                 data[1] -= 100 * k
                 if (pos.X === -1) {
-                    data[0] += 50 * k
+                    data[1] += 50 * k
                 }
                 else if (pos.X === 1) {
-                    data[1] += 50 * k
+                    data[0] += 50 * k
                 }
             }
         }

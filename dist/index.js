@@ -23,7 +23,7 @@ const config = JSON.parse(fs_1.default.readFileSync(path_1.default.join(root, 'c
 const database = config.mysql.host !== null ? new mysql_database_1.default(config.mysql) : new sqlite_database_1.SQLite_DataBase('db.sqlite');
 const web_api = config.api_url !== null ? new web_api_1.default(config.api_url) : null;
 const sender = config.email_sender.auth.user !== null ? new sender_1.Sender(config.email_sender) : null;
-const templ = fs_1.default.readFileSync(path_1.default.join(root, 'template.ino'), 'utf-8');
+const templ = fs_1.default.readFileSync(path_1.default.join(root, 'robot_template.ino'), 'utf-8');
 function get_zip(uid, ssid, password) {
     const zip = new adm_zip_1.default();
     const data = Buffer.from(templ

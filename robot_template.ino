@@ -8,11 +8,11 @@
 #include <ArduinoJson.h>
 #endif
 
-#define ssid "{wifi}"
-#define password "{password}"
+#define ssid "Izobretay_Luxury"
+#define password "SkazhiteI"
 
-#define mqtt_host "{host}"
-#define mqtt_port {port}
+#define mqtt_host "broker.mqttdashboard.com"
+#define mqtt_port 1883
 
 #define ENA 4
 #define IN1 0
@@ -22,7 +22,7 @@
 #define IN3 12
 #define IN4 13
 
-const String uid = "{uid}";
+const String uid = "8863ec56-17d8-48bb-ad7d-1c34eb3f12df";
 
 const String topic_pos = uid + ":pos";
 const String topic_con = uid + ":con";
@@ -63,53 +63,16 @@ void setup_pins() {
     digitalWrite(IN4, LOW);
 }
 
-void go(int8_t x, int8_t y) {
-    if (x > 100 || x < -100 || y > 100 || y < -100) {
-        return;
-    }
+void go(int16_t m1, int16_t m2) {
+    if (m1 > 1024 || m1 < -1024 || m2 > 1024 || m2 < -1024) return;
 
-     if (y >= 0) {
-        if (x >= 0) {
-            analogWrite(ENA, abs(y*10 - x*5));
-            digitalWrite(IN1, HIGH);
-            digitalWrite(IN2, LOW);
-            
-            analogWrite(ENB, y*10);
-            digitalWrite(IN3, HIGH);
-            digitalWrite(IN4, LOW);
-        }
-        else {
-            x *= -1;
-            analogWrite(ENA, y*10);
-            digitalWrite(IN1, HIGH);
-            digitalWrite(IN2, LOW);
-            
-            analogWrite(ENB, abs(y*10 - x*5));
-            digitalWrite(IN3, HIGH);
-            digitalWrite(IN4, LOW);
-        }
-    }
-    else if (y < 0) {
-        y *= -1;
-        if (x >= 0) {
-            analogWrite(ENA, abs(y*10 - x*5));
-            digitalWrite(IN1, LOW);
-            digitalWrite(IN2, HIGH);
-            
-            analogWrite(ENB, y*10);
-            digitalWrite(IN3, LOW);
-            digitalWrite(IN4, HIGH);
-        }
-        else {
-            analogWrite(ENA, y*10);
-            digitalWrite(IN1, LOW);
-            digitalWrite(IN2, HIGH);
-            
-            analogWrite(ENB, abs(y*10 - x*5));
-            digitalWrite(IN3, LOW);
-            digitalWrite(IN4, HIGH);
-        }
-    }
+    analogWrite(ENA, m1 > 0 ? m1 : -m1);
+    digitalWrite(IN1, m1 > 0 ? HIGH : LOW);
+    digitalWrite(IN2, m1 > 0 ? LOW : HIGH);
+    
+    analogWrite(ENB, m2 > 0 ? m2 : -m2);
+    digitalWrite(IN3, m2 > 0 ? HIGH : LOW);
+    digitalWrite(IN4, m2 > 0 ? LOW : HIGH);
 }
 
 void connect_wifi() {
@@ -142,15 +105,15 @@ void connect_mqtt() {
 void mqtt_callback(char* topic, unsigned char* data, unsigned int len) {
     #ifdef JSON
     deserializeJson(json, data);
-    const int8_t x = json["X"];
-    const int8_t y = json["Y"];
+    const int16_t m1 = json["m1"];
+    const int16_t m2 = json["m2"];
     #else
-    if (len != 2) return;
-    const int8_t x = data[0];
-    const int8_t y = data[1];
+    if (len != 4) return;
+    const int16_t m1 = ((int16_t*)data)[0];
+    const int16_t m2 = ((int16_t*)data)[1];
     #endif
-    Serial.printf("X: %hhd, Y: %hhd\n", x, y);
-    go(x, y);
+    Serial.printf("m1: %hd, m2: %hd\n", m1, m2);
+    go(m1, m2);
 }
 
 void setup() {
