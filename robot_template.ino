@@ -76,15 +76,16 @@ void go(int16_t m1, int16_t m2) {
 }
 
 void connect_wifi() {
-    delay(100);
+    Serial.printf("Connecting to %s", ssid);
 
     WiFi.begin(ssid, password);
 
     while (WiFi.status() != WL_CONNECTED) {
         delay(100);
+        Serial.print('.');
     }
     
-    Serial.printf("Connected to %s\n", ssid);
+    Serial.printf("\nConnected to %s\n", ssid);
 }
 
 void connect_mqtt() {
