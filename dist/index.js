@@ -23,16 +23,29 @@ const config = JSON.parse(fs_1.default.readFileSync(path_1.default.join(root, 'c
 const database = config.mysql.host !== null ? new mysql_database_1.default(config.mysql) : new sqlite_database_1.SQLite_DataBase('db.sqlite');
 const web_api = config.api_url !== null ? new web_api_1.default(config.api_url) : null;
 const sender = config.email_sender.auth.user !== null ? new sender_1.Sender(config.email_sender) : null;
-const templ = fs_1.default.readFileSync(path_1.default.join(root, 'robot_template.ino'), 'utf-8');
-function get_zip(uid, ssid, password) {
+const cam_server_url = config.cam_server_host !== null ? `${config.cam_server_scheme}://${config.cam_server_host}:${config.cam_server_port}` : null;
+function get_robot_code(uid, ssid, password) {
+    const template = fs_1.default.readFileSync(path_1.default.join(root, 'robot_template.ino'), 'utf-8');
     const zip = new adm_zip_1.default();
-    const data = Buffer.from(templ
+    const data = Buffer.from(template
         .replace('{wifi}', ssid)
         .replace('{password}', password)
-        .replaceAll('{uid}', uid)
+        .replace('{uid}', uid)
         .replace('{host}', config.mqtt_host)
         .replace('{port}', config.mqtt_port));
-    zip.addFile('script/script.ino', data);
+    zip.addFile('robot_code/robot_code.ino', data);
+    return zip.toBuffer();
+}
+function get_cam_code(uid, ssid, password) {
+    const template = fs_1.default.readFileSync(path_1.default.join(root, 'cam_template.ino'), 'utf-8');
+    const zip = new adm_zip_1.default();
+    const data = Buffer.from(template
+        .replace('{wifi}', ssid)
+        .replace('{password}', password)
+        .replace('{uid}', uid)
+        .replace('{host}', config.cam_server_host)
+        .replace('{port}', config.cam_server_port));
+    zip.addFile('cam_code/cam_code.ino', data);
     return zip.toBuffer();
 }
 app.use(express_1.default.urlencoded({ extended: true }));
@@ -105,21 +118,30 @@ async function login(username, password, res) {
 }
 app.get('/', async (req, res) => {
     if (await is_loged_in(req)) {
-        res.render('index.ejs', { mqtt_url: `ws://${config.mqtt_host}:${config.mqtt_port}/mqtt`, cam_server_url: config.cam_server_url });
+        res.render('index.ejs', { mqtt_url: `ws://${config.mqtt_host}:${config.mqtt_port}/mqtt`, cam_server_url });
         return;
     }
     res.redirect('/login');
 });
-app.get('/script.zip', (req, res) => {
+app.get('/robot_code.zip', (req, res) => {
     if (typeof req.query.wifi !== 'string' || typeof req.query.password !== 'string' || typeof req.cookies.uid !== 'string') {
-        res.redirect('/');
+        res.writeHead(404);
+        res.end();
         return;
     }
-    res.send(get_zip(req.cookies.uid, req.query.wifi, req.query.password));
+    res.send(get_robot_code(req.cookies.uid, req.query.wifi, req.query.password));
+});
+app.get('/cam_code.zip', (req, res) => {
+    if (typeof req.query.wifi !== 'string' || typeof req.query.password !== 'string' || typeof req.cookies.uid !== 'string' || config.cam_server_host === null) {
+        res.writeHead(404);
+        res.end();
+        return;
+    }
+    res.send(get_cam_code(req.cookies.uid, req.query.wifi, req.query.password));
 });
 app.get('/profile', async (req, res) => {
     if (await is_loged_in(req)) {
-        res.render('profile.ejs');
+        res.render('profile.ejs', { has_cam_server: cam_server_url !== null });
         return;
     }
     res.redirect('/login');
