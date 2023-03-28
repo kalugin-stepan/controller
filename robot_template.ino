@@ -8,11 +8,11 @@
 #include <ArduinoJson.h>
 #endif
 
-#define ssid "Izobretay_Luxury"
-#define password "SkazhiteI"
+#define ssid "{wifi}"
+#define password "{password}"
 
-#define mqtt_host "broker.mqttdashboard.com"
-#define mqtt_port 1883
+#define mqtt_host "{host}"
+#define mqtt_port {port}
 
 #define ENA 4
 #define IN1 0
@@ -22,7 +22,7 @@
 #define IN3 12
 #define IN4 13
 
-const String uid = "8863ec56-17d8-48bb-ad7d-1c34eb3f12df";
+const String uid = "{uid}";
 
 const String topic_pos = uid + ":pos";
 const String topic_con = uid + ":con";

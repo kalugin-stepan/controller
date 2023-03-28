@@ -56,22 +56,39 @@ function personalData() {
     main.append(h3)
 }
 
-function config() {
+function robot_code_generation_form() {
     const main = $('.profile')
     main.html('')
     main.append($('<input name="wifi" placeholder="Wi-FI login"><br>'))
     main.append($('<input name="password" placeholder="Wi-FI password"><br>'))
-    main.append($('<button name="dow">Download</button>'))
-    $('button[name="dow"]').on('click', download)
+    main.append($('<button name="dow">Download robot code</button>'))
+    $('button[name="dow"]').on('click', download_robot_code)
 }
 
-function download() {
+function cam_code_generation_form() {
+    const main = $('.profile')
+    main.html('')
+    main.append($('<input name="wifi" placeholder="Wi-FI login"><br>'))
+    main.append($('<input name="password" placeholder="Wi-FI password"><br>'))
+    main.append($('<button name="dow">Download cam code</button>'))
+    $('button[name="dow"]').on('click', download_cam_code)
+}
+
+function download_robot_code() {
     const wifi = $('input[name="wifi"]').val()
     const password = $('input[name="password"]').val()
-    window.location.href = `/script.zip?wifi=${wifi}&password=${password}`
+    window.location.href = `/robot_code.zip?wifi=${wifi}&password=${password}`
 }
+
+function download_cam_code() {
+    const wifi = $('input[name="wifi"]').val()
+    const password = $('input[name="password"]').val()
+    window.location.href = `/cam_code.zip?wifi=${wifi}&password=${password}`
+}
+
 $(() => {
     personalData()
     $('button[name="data"]').on('click', personalData)
-    $('button[name="config"]').on('click', config)
+    $('button[name="robot_code_download_form"]').on('click', robot_code_generation_form)
+    $('button[name="cam_code_download_form"]').on('click', cam_code_generation_form)
 })

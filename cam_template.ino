@@ -4,18 +4,17 @@
 #include "soc/rtc_cntl_reg.h"
 #include "esp_camera.h"
 
-#define SSID "Izobretay_Luxury" // Wifi SSID
-#define PASSWORD "SkazhiteI"    // Wifi password
+#define SSID "{wifi}"
+#define PASSWORD "{password}"
 
-#define SERVER_NAME "192.168.0.105"
+#define SERVER_NAME "{host}"
 
-#define SERVER_PORT 8080
+#define SERVER_PORT {port}
 
-#define ID "8863ec56-17d8-48bb-ad7d-1c34eb3f12df"
+#define ID "{uid}"
 
 WiFiClient client;
 
-// CAMERA_MODEL_AI_THINKER
 #define CAMERA_MODEL_AI_THINKER
 #define PWDN_GPIO_NUM 32
 #define RESET_GPIO_NUM -1

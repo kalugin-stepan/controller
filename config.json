@@ -21,5 +21,7 @@
         "database": "drone",
         "port": 3306
     },
-    "cam_server_url": null
+    "cam_server_scheme": "http",
+    "cam_server_host": null,
+    "cam_server_port": null
 }
