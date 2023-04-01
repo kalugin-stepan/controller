@@ -12,7 +12,8 @@
         "from": null
     },
     "mqtt_host": "broker.mqttdashboard.com",
-    "mqtt_port": 8000,
+    "mqtt_port": 1883,
+    "web_socket_mqtt_port": 8000,
     "api_url": null,
     "mysql": {
         "host": null,
@@ -23,5 +24,6 @@
     },
     "cam_server_scheme": "http",
     "cam_server_host": null,
-    "cam_server_port": null
+    "cam_server_port": null,
+    "cam_server_http_port": null
 }
