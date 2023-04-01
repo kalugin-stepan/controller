@@ -28,7 +28,7 @@ const web_api: WebApi | null = config.api_url !== null ? new WebApi(config.api_u
 
 const sender: Sender | null = config.email_sender.auth.user !== null ? new Sender(config.email_sender) : null
 
-const cam_server_url = config.cam_server_host !== null ? `${config.cam_server_scheme}://${config.cam_server_host}:${config.cam_server_port}` : null
+const cam_server_url = config.cam_server_host !== null ? `${config.cam_server_scheme}://${config.cam_server_host}:${config.cam_server_http_port}` : null
 
 function get_robot_code(uid: string, ssid: string, password: string): Buffer {
     const template = fs.readFileSync(path.join(root, 'robot_template.ino'), 'utf-8')
@@ -133,7 +133,7 @@ async function login(username: string, password: string, res: Response): Promise
 
 app.get('/', async (req, res) => {
     if (await is_loged_in(req)) {
-        res.render('index.ejs', {mqtt_url: `ws://${config.mqtt_host}:${config.mqtt_port}/mqtt`, cam_server_url})
+        res.render('index.ejs', {mqtt_url: `ws://${config.mqtt_host}:${config.web_socket_mqtt_port}/mqtt`, cam_server_url})
         return
     }
     res.redirect('/login')

@@ -23,7 +23,7 @@ const config = JSON.parse(fs_1.default.readFileSync(path_1.default.join(root, 'c
 const database = config.mysql.host !== null ? new mysql_database_1.default(config.mysql) : new sqlite_database_1.SQLite_DataBase('db.sqlite');
 const web_api = config.api_url !== null ? new web_api_1.default(config.api_url) : null;
 const sender = config.email_sender.auth.user !== null ? new sender_1.Sender(config.email_sender) : null;
-const cam_server_url = config.cam_server_host !== null ? `${config.cam_server_scheme}://${config.cam_server_host}:${config.cam_server_port}` : null;
+const cam_server_url = config.cam_server_host !== null ? `${config.cam_server_scheme}://${config.cam_server_host}:${config.cam_server_http_port}` : null;
 function get_robot_code(uid, ssid, password) {
     const template = fs_1.default.readFileSync(path_1.default.join(root, 'robot_template.ino'), 'utf-8');
     const zip = new adm_zip_1.default();
@@ -118,7 +118,7 @@ async function login(username, password, res) {
 }
 app.get('/', async (req, res) => {
     if (await is_loged_in(req)) {
-        res.render('index.ejs', { mqtt_url: `ws://${config.mqtt_host}:${config.mqtt_port}/mqtt`, cam_server_url });
+        res.render('index.ejs', { mqtt_url: `ws://${config.mqtt_host}:${config.web_socket_mqtt_port}/mqtt`, cam_server_url });
         return;
     }
     res.redirect('/login');

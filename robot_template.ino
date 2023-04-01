@@ -8,11 +8,11 @@
 #include <ArduinoJson.h>
 #endif
 
-#define ssid "{wifi}"
-#define password "{password}"
+#define SSID "{wifi}"
+#define PASSWORD "{password}"
 
-#define mqtt_host "{host}"
-#define mqtt_port {port}
+#define MQTT_HOST "{host}"
+#define MQTT_PORT {port}
 
 #define ENA 4
 #define IN1 0
@@ -22,10 +22,10 @@
 #define IN3 12
 #define IN4 13
 
-const String uid = "{uid}";
+const String UID = "{uid}";
 
-const String topic_pos = uid + ":pos";
-const String topic_con = uid + ":con";
+const String TOPIC_POS = UID + ":pos";
+const String TOPIC_CON = UID + ":con";
 
 WiFiClient wifi_client;
 PubSubClient mqtt_client(wifi_client);
@@ -76,25 +76,25 @@ void go(int16_t m1, int16_t m2) {
 }
 
 void connect_wifi() {
-    Serial.printf("Connecting to %s", ssid);
+    Serial.printf("Connecting to %s", SSID);
 
-    WiFi.begin(ssid, password);
+    WiFi.begin(SSID, PASSWORD);
 
     while (WiFi.status() != WL_CONNECTED) {
         delay(100);
         Serial.print('.');
     }
     
-    Serial.printf("\nConnected to %s\n", ssid);
+    Serial.printf("\nConnected to %s\n", SSID);
 }
 
 void connect_mqtt() {
     String client_id = "esp8266-client-";
     client_id += String(WiFi.macAddress());
-    Serial.println(client_id);
+    Serial.printf("Connecting to %s:%d\n", MQTT_HOST, MQTT_PORT);
     while (!mqtt_client.connected()) {
         if (mqtt_client.connect(client_id.c_str())) {
-            Serial.printf("Connected to %s:%d\n", mqtt_host, mqtt_port);
+            Serial.printf("Connected to %s:%d\n", MQTT_HOST, MQTT_PORT);
             delay(100);
             continue;
         }
@@ -121,22 +121,22 @@ void setup() {
     Serial.begin(115200);
     setup_pins();
     connect_wifi();
-    mqtt_client.setServer(mqtt_host, mqtt_port);
+    mqtt_client.setServer(MQTT_HOST, MQTT_PORT);
     connect_mqtt();
-    mqtt_client.subscribe(topic_pos.c_str());
+    mqtt_client.subscribe(TOPIC_POS.c_str());
     mqtt_client.setCallback(mqtt_callback);
-    mqtt_client.publish(topic_con.c_str(), "");
+    mqtt_client.publish(TOPIC_CON.c_str(), "");
     last_ping_time = millis();
 }
 
 void loop() {
     if (!mqtt_client.connected()) {
         connect_mqtt();
-        mqtt_client.publish(topic_con.c_str(), "");
+        mqtt_client.publish(TOPIC_CON.c_str(), "");
     }
     unsigned long cur_time = millis();
     if (cur_time - last_ping_time > 2500) {
-        mqtt_client.publish(topic_con.c_str(), "");
+        mqtt_client.publish(TOPIC_CON.c_str(), "");
         last_ping_time = cur_time;
     }
     mqtt_client.loop();

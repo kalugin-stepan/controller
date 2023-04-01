@@ -7,11 +7,11 @@
 #define SSID "{wifi}"
 #define PASSWORD "{password}"
 
-#define SERVER_NAME "{host}"
+#define SERVER_HOST "{host}"
 
 #define SERVER_PORT {port}
 
-#define ID "{uid}"
+#define UID "{uid}"
 
 WiFiClient client;
 
@@ -110,12 +110,12 @@ void setup()
 
 void loop()
 {
-    if (client.connect(SERVER_NAME, SERVER_PORT))
+    if (client.connect(SERVER_HOST, SERVER_PORT))
     {
     #ifdef DEBUG
         Serial.println("connected");
     #endif
-        client.write(ID);
+        client.write(UID);
         while (client.connected())
         {
             Serial.println("Still connected\n");

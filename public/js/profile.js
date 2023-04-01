@@ -59,8 +59,8 @@ function personalData() {
 function robot_code_generation_form() {
     const main = $('.profile')
     main.html('')
-    main.append($('<input name="wifi" placeholder="Wi-FI login"><br>'))
-    main.append($('<input name="password" placeholder="Wi-FI password"><br>'))
+    main.append($('<input name="wifi" placeholder="SSID"><br>'))
+    main.append($('<input name="password" placeholder="password" type="password"><br>'))
     main.append($('<button name="dow">Download robot code</button>'))
     $('button[name="dow"]').on('click', download_robot_code)
 }
@@ -68,8 +68,8 @@ function robot_code_generation_form() {
 function cam_code_generation_form() {
     const main = $('.profile')
     main.html('')
-    main.append($('<input name="wifi" placeholder="Wi-FI login"><br>'))
-    main.append($('<input name="password" placeholder="Wi-FI password"><br>'))
+    main.append($('<input name="wifi" placeholder="SSID"><br>'))
+    main.append($('<input name="password" placeholder="password" type="password"><br>'))
     main.append($('<button name="dow">Download cam code</button>'))
     $('button[name="dow"]').on('click', download_cam_code)
 }
