@@ -1,57 +1,46 @@
-# Веб-сервис для дистанционного управления колёсными платформами
+# Information system for remote play of robofootball
 
-Данный веб сервис позволяет управлять n-ым количиством колёсных платформ(роботов для робофутбола),
-посредствам веб интерфейса.
+This system allow robofootball players play robofootball remotely using the internet.
 
-## Инфологическая модель
+## Infological model
 
-![Изображение инфологической модели](model.jpg "Инфологическая модель")
+![Image of infological model](model.jpg "Infological model")
 
-После регистрации в сервисе, пошивки колёсной платформы и
-подключения её к wi-fi, она посылает через MQTT Broker на сервер запрос на
-подключение, содержащий уникальный идентификатор пользователя, после чего
-сервер аналогично отсылает ответ на запрос - `0/1`, `1` - подключение
-одобрено, `0` - подключение отклонено. Подробнее про протокол можно
-посмотреть в файле `robot_command_sets.md`.
+The main part of my project is HTTP server. First time you connect to HTTP server you need to register and then login.
+After that your username and email stores in database and you gets a unique string identefier. Using this identefier 
+robot can send messages through MQTT broker, because I use this identifier as a topic for MQTT broker, so robot subscibes
+to this topic and recives data from MQTT broker and user from the browser send data to MQTT broker using this topic.
 
-После этого серевер через web-socket соеденение принемает данные из браузера, после чего, через MQTT Broker, отсылает их на соответствующие
-колёсные платформы.
+On the right side of the model you can see the "Video stream transmitter", it is my another project which used for transmitting
+the video from ESP32-CAM to the browser. ESP32-CAM is used as FPV(first person view) camera for the robot. You can see more about this here -> https://github.com/kalugin-stepan/cam_server.
 
-## Установка
+## Dependencies
 
-Перед установкой веб-сервиса тербуется установитт MQTT Broker или
-воспользоваться публичным. После его установки/выбора надо указать его
-ip-аддрес и порт в файле конфига(config.json). В нём также нужно указать
-ip-адрес/домен сервера и порт на котором будет работать веб-сервис, а
-также email, с которого пользователям будут приходить письма с
-подтверждением регистрации, и пароль от него.
+* Node.js
+* MySQL (optial)
+* MQTT broker (optional)
 
-После этого нужно установить Node.js (`https://nodejs.org`).
+## Usage
 
-Скопировать код из репозитория и установить зависимости.
+First you need to edit ```config.json```.
+Here you can enable or disable MySQL (you can use SQLite instead), email confirmation and video transmitting.
+Also you should type the hostname in it.
 
+Then you should install Node.js dependencies using npm(```npm i```) or yarn (```yarn```).
+
+### Starting the system
 ```bash
-    git clone https://github.com/kalugin-stepan/controller
-    cd controller
-    npm i
+    pm2 start ./dist/index.js --name controller
 ```
 
-## Управление веб-сервисом
-
-### Запуск
+### Stoping the system
 
 ```bash
-    pm2 start ./dist/index.js
+    pm2 stop controller
 ```
 
-### Остановка
+### Restarting the system
 
 ```bash
-    pm2 stop index
-```
-
-### Перезапуск
-
-```bash
-    pm2 restart index
+    pm2 restart controller
 ```
