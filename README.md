@@ -4,7 +4,7 @@ This system allow robofootball players play robofootball remotely using the inte
 
 ## Infological model
 
-![Image of infological model](model.jpg "Infological model")
+![Image of infological model](model.png "Infological model")
 
 The main part of my project is HTTP server. First time you connect to HTTP server you need to register and then login.
 After that your username and email stores in database and you gets a unique string identefier. Using this identefier 
