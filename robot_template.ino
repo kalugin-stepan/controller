@@ -140,7 +140,7 @@ void mqtt_callback(char* topic, unsigned char* data, unsigned int len) {
     const int16_t x = ((int16_t*)data)[0];
     const int16_t y = ((int16_t*)data)[1];
     #endif
-    Serial.printf("x: %hd, y: %hd\n", m1, m2);
+    Serial.printf("x: %hd, y: %hd\n", x, y);
     go(x, y);
 }
 
