@@ -80,25 +80,25 @@ void go(int16_t x, int16_t y) {
     int m2 = y + x;
 
     if (m1 > 0) {
-        analogWrite(ENA, m1);
-        digitalWrite(IN1, dir);
-        digitalWrite(IN2, !dir);
-    }
-    else {
-        analogWrite(ENA, -m1);
-        digitalWrite(IN1, !dir);
-        digitalWrite(IN2, dir);
-    }
-    
-    if (m2 > 0) {
-        analogWrite(ENB, m2);
+        analogWrite(ENB, m1);
         digitalWrite(IN3, dir);
         digitalWrite(IN4, !dir);
     }
     else {
-        analogWrite(ENB, -m2);
+        analogWrite(ENB, -m1);
         digitalWrite(IN3, !dir);
         digitalWrite(IN4, dir);
+    }
+
+    if (m2 > 0) {
+        analogWrite(ENA, m2);
+        digitalWrite(IN1, dir);
+        digitalWrite(IN2, !dir);
+    }
+    else {
+        analogWrite(ENA, -m2);
+        digitalWrite(IN1, !dir);
+        digitalWrite(IN2, dir);
     }
 }
 
