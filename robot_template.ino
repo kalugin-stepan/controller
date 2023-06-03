@@ -63,16 +63,43 @@ void setup_pins() {
     digitalWrite(IN4, LOW);
 }
 
-void go(int16_t m1, int16_t m2) {
-    if (m1 > 1024 || m1 < -1024 || m2 > 1024 || m2 < -1024) return;
+void go(int16_t x, int16_t y) {
+    if (x > 1024 || x < -1024 || y > 1024 || y < -1024) return;
 
-    analogWrite(ENA, m1 > 0 ? m1 : -m1);
-    digitalWrite(IN1, m1 > 0 ? HIGH : LOW);
-    digitalWrite(IN2, m1 > 0 ? LOW : HIGH);
+    uint8_t dir;
+
+    if (y > 0) {
+        dir = HIGH;
+    }
+    else {
+        dir = LOW;
+        y = -y;
+    }
+
+    int m1 = y - x;
+    int m2 = y + x;
+
+    if (m1 > 0) {
+        analogWrite(ENA, m1);
+        digitalWrite(IN1, dir);
+        digitalWrite(IN2, !dir);
+    }
+    else {
+        analogWrite(ENA, -m1);
+        digitalWrite(IN1, !dir);
+        digitalWrite(IN2, dir);
+    }
     
-    analogWrite(ENB, m2 > 0 ? m2 : -m2);
-    digitalWrite(IN3, m2 > 0 ? HIGH : LOW);
-    digitalWrite(IN4, m2 > 0 ? LOW : HIGH);
+    if (m2 > 0) {
+        analogWrite(ENB, m2);
+        digitalWrite(IN3, dir);
+        digitalWrite(IN4, !dir);
+    }
+    else {
+        analogWrite(ENB, -m2);
+        digitalWrite(IN3, !dir);
+        digitalWrite(IN4, dir);
+    }
 }
 
 void connect_wifi() {
@@ -106,15 +133,15 @@ void connect_mqtt() {
 void mqtt_callback(char* topic, unsigned char* data, unsigned int len) {
     #ifdef JSON
     deserializeJson(json, data);
-    const int16_t m1 = json["m1"];
-    const int16_t m2 = json["m2"];
+    const int16_t x = json["x"];
+    const int16_t y = json["y"];
     #else
     if (len != 4) return;
-    const int16_t m1 = ((int16_t*)data)[0];
-    const int16_t m2 = ((int16_t*)data)[1];
+    const int16_t x = ((int16_t*)data)[0];
+    const int16_t y = ((int16_t*)data)[1];
     #endif
-    Serial.printf("m1: %hd, m2: %hd\n", m1, m2);
-    go(m1, m2);
+    Serial.printf("x: %hd, y: %hd\n", m1, m2);
+    go(x, y);
 }
 
 void setup() {
