@@ -97,7 +97,10 @@ class Joy {
         this.joy.css('left', this.joy_default_pos);
         this.joy.css('top', this.joy_default_pos);
     }
-    GetPos(num_of_digits = 1) {
-        return { X: Math.round(this.pos.X * num_of_digits), Y: Math.round(this.pos.Y * num_of_digits) };
+    GetPos(max_num = 1) {
+        const data = new Int16Array(2)
+        data[0] = Math.round(this.pos.X * max_num)
+        data[1] = Math.round(this.pos.Y * max_num)
+        return data;
     }
 }

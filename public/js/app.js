@@ -91,7 +91,7 @@ class App {
     SendPos(k) {
         if (!this.connected) return
 
-        const data = new Int16Array(2)
+        let data = new Int16Array(2)
 
         if (
             (this.directions.forward && this.directions.back)
@@ -136,40 +136,7 @@ class App {
         }
 
         if (data[0] === 0 && data[1] === 0) {
-            const pos = this.joy.GetPos()
-
-            if (pos.Y === 0) {
-                if (pos.X === -1) {
-                    data[0] += 100 * k
-                    data[1] -= 100 * k
-                }
-                else if (pos.X === 1) {
-                    data[0] -= 100 * k
-                    data[1] += 100 * k
-                }
-            }
-
-            else if (pos.Y === 1) {
-                data[0] += 100 * k
-                data[1] += 100 * k
-                if (pos.X === -1) {
-                    data[1] -= 50 * k
-                }
-                else if (pos.X === 1) {
-                    data[0] -= 50 * k
-                }
-            }
-
-            else if (pos.Y === -1) {
-                data[0] -= 100 * k
-                data[1] -= 100 * k
-                if (pos.X === -1) {
-                    data[1] += 50 * k
-                }
-                else if (pos.X === 1) {
-                    data[0] += 50 * k
-                }
-            }
+            data = this.joy.GetPos(k)
         }
 
         this.mqtt_conn.publish(this.uid + ':pos', new Uint8Array(data.buffer))
