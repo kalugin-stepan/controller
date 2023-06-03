@@ -91,52 +91,50 @@ class App {
     SendPos(k) {
         if (!this.connected) return
 
-        let data = new Int16Array(2)
-
-        if (
-            (this.directions.forward && this.directions.back)
-            ||
-            (!this.directions.forward && !this.directions.back)
-        ) {
-            if (this.directions.left && this.directions.right) {}
-            else if (this.directions.left) {
-                data[0] += 100 * k
-                data[1] -= 100 * k
-            }
-            else if (this.directions.right) {
-                data[0] -= 100 * k
-                data[1] += 100 * k
-            }
-        }
-
-        else if (this.directions.forward) {
-            data[0] += 100 * k
-            data[1] += 100 * k
-
-            if (this.directions.left && this.directions.right) {}
-            else if (this.directions.left) {
-                data[1] -= 50 * k
-            }
-            else if (this.directions.right) {
-                data[0] -= 50 * k
-            }
-        }
-
-        else if (this.directions.back) {
-            data[0] -= 100 * k
-            data[1] -= 100 * k
-
-            if (this.directions.left && this.directions.right) {}
-            else if (this.directions.left) {
-                data[1] += 50 * k
-            }
-            else if (this.directions.right) {
-                data[0] += 50 * k
-            }
-        }
+        const data = this.joy.GetPos(k*100)
 
         if (data[0] === 0 && data[1] === 0) {
-            data = this.joy.GetPos(k)
+            if (
+                (this.directions.forward && this.directions.back)
+                ||
+                (!this.directions.forward && !this.directions.back)
+            ) {
+                if (this.directions.left && this.directions.right) {}
+                else if (this.directions.left) {
+                    data[0] += 100 * k
+                    data[1] -= 100 * k
+                }
+                else if (this.directions.right) {
+                    data[0] -= 100 * k
+                    data[1] += 100 * k
+                }
+            }
+    
+            else if (this.directions.forward) {
+                data[0] += 100 * k
+                data[1] += 100 * k
+    
+                if (this.directions.left && this.directions.right) {}
+                else if (this.directions.left) {
+                    data[1] -= 50 * k
+                }
+                else if (this.directions.right) {
+                    data[0] -= 50 * k
+                }
+            }
+    
+            else if (this.directions.back) {
+                data[0] -= 100 * k
+                data[1] -= 100 * k
+    
+                if (this.directions.left && this.directions.right) {}
+                else if (this.directions.left) {
+                    data[1] += 50 * k
+                }
+                else if (this.directions.right) {
+                    data[0] += 50 * k
+                }
+            }   
         }
 
         this.mqtt_conn.publish(this.uid + ':pos', new Uint8Array(data.buffer))
