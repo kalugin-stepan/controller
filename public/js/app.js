@@ -93,18 +93,30 @@ class App {
 
         const data = this.joy.GetPos(k*100)
 
+        const x = data[0]
+        const y = data[1]
+
+        data[0] = y
+        data[1] = y
+        data[0] -= x/2
+        data[1] += x/2
+
         if (data[0] === 0 && data[1] === 0) {
             if (this.directions.forward) {
-                data[1] += 1000
+                data[0] += k*100
+                data[1] += k*100
             }
             if (this.directions.back) {
-                data[1] -= 1000
+                data[0] -= k*100
+                data[1] -= k*100
             }
             if (this.directions.left) {
-                data[0] -= 1000
+                data[0] -= k*50
+                data[1] += k*50
             }
             if (this.directions.right) {
-                data[0] += 1000
+                data[0] += k*50
+                data[1] -= k*50
             }
         }
 
